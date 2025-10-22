@@ -1,0 +1,234 @@
+import 'dart:async';
+
+import 'package:anchor/anchor.dart';
+import 'package:flutter/widgets.dart';
+
+import 'arrow/rendering/arrows.dart';
+import 'core/config.dart';
+import 'core/controller.dart';
+import 'core/data.dart';
+import 'core/trigger.dart';
+import 'popover.dart';
+
+/// Creates an anchor overlay styled as a tooltip.
+class AnchorTooltip extends StatelessWidget {
+  /// Creates an anchor tooltip.
+  const AnchorTooltip({
+    super.key,
+    required this.child,
+    required this.message,
+    this.controller,
+    this.spacing,
+    this.offset,
+    this.triggerMode,
+    this.backgroundColor,
+    this.padding,
+    this.borderRadius,
+    this.arrowSize,
+    this.arrowAlignment,
+    this.arrowShape,
+    this.placement,
+    this.enableFlip,
+    this.enableShift,
+    this.scrollBehavior,
+    this.transitionDuration,
+    this.transitionBuilder,
+    this.backdropBuilder,
+    this.boxShadow,
+    this.border,
+    this.showDuration,
+    this.onShow,
+    this.onHide,
+  });
+
+  /// The widget that the overlay is anchored to.
+  final Widget child;
+
+  /// The tooltip message to display.
+  final Widget message;
+
+  /// {@macro anchor_controller}
+  final AnchorController? controller;
+
+  /// {@macro anchor_spacing}
+  final double? spacing;
+
+  /// {@macro anchor_offset}
+  final Offset? offset;
+
+  /// {@macro anchor_trigger_mode}
+  final AnchorTriggerMode? triggerMode;
+
+  /// The background color of the tooltip overlay.
+  final Color? backgroundColor;
+
+  /// The padding inside the tooltip overlay.
+  final EdgeInsets? padding;
+
+  /// The border radius of the tooltip overlay.
+  final BorderRadius? borderRadius;
+
+  /// The size of the arrow for the tooltip overlay.
+  final Size? arrowSize;
+
+  /// The alignment of the arrow for the tooltip overlay.
+  final double? arrowAlignment;
+
+  /// The shape of the arrow for the tooltip overlay.
+  final ArrowShape? arrowShape;
+
+  /// {@macro anchor_placement}
+  final Placement? placement;
+
+  /// {@macro anchor_enable_flip}
+  final bool? enableFlip;
+
+  /// {@macro anchor_enable_shift}
+  final bool? enableShift;
+
+  /// {@macro anchor_scroll_behavior}
+  final AnchorScrollBehavior? scrollBehavior;
+
+  /// {@macro anchor_transition_duration}
+  final Duration? transitionDuration;
+
+  /// {@macro anchor_transition_builder}
+  final AnimatedTransitionBuilder? transitionBuilder;
+
+  /// {@macro anchor_backdrop_builder}
+  final WidgetBuilder? backdropBuilder;
+
+  /// The box shadow(s) for the tooltip overlay.
+  final List<BoxShadow>? boxShadow;
+
+  /// The border for the tooltip overlay.
+  final BorderSide? border;
+
+  /// Duration to show the tooltip before auto-dismissing.
+  final Duration? showDuration;
+
+  /// {@macro anchor_on_show}
+  final VoidCallback? onShow;
+
+  /// {@macro anchor_on_hide}
+  final VoidCallback? onHide;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectivePadding =
+        padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
+    return AnchorConfig(
+      enableOverlayHover: false,
+      child: AnchorPopover(
+        overlayBuilder: (context) => _TooltipAutoDismiss(
+          showDuration: showDuration,
+          child: Padding(
+            padding: effectivePadding,
+            child: message,
+          ),
+        ),
+        controller: controller,
+        spacing: spacing,
+        offset: offset,
+        triggerMode: triggerMode ?? const AnchorTriggerMode.hover(),
+        backgroundColor: backgroundColor,
+        borderRadius: borderRadius,
+        arrowSize: arrowSize,
+        arrowAlignment: arrowAlignment,
+        arrowShape: arrowShape,
+        placement: placement,
+        enableFlip: enableFlip,
+        enableShift: enableShift,
+        scrollBehavior: scrollBehavior,
+        transitionDuration: transitionDuration,
+        transitionBuilder: transitionBuilder,
+        backdropBuilder: backdropBuilder,
+        boxShadow: boxShadow,
+        border: border,
+        onShow: onShow,
+        onHide: onHide,
+        child: child,
+      ),
+    );
+  }
+}
+
+class _TooltipAutoDismiss extends StatefulWidget {
+  const _TooltipAutoDismiss({
+    required this.child,
+    required this.showDuration,
+  });
+
+  final Widget child;
+  final Duration? showDuration;
+
+  @override
+  State<_TooltipAutoDismiss> createState() => _TooltipAutoDismissState();
+}
+
+class _TooltipAutoDismissState extends State<_TooltipAutoDismiss> {
+  AnchorController? _controller;
+  Timer? _dismissTimer;
+
+  bool get _isShowing => _controller?.isShowing ?? false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final controller = AnchorData.maybeOf(context)?.controller;
+    if (_controller == controller) return;
+
+    _controller?.removeListener(_handleControllerChanged);
+    _controller = controller;
+    _controller?.addListener(_handleControllerChanged);
+
+    if (_controller?.isShowing ?? false) {
+      _startTimer();
+    } else {
+      _cancelTimer();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _TooltipAutoDismiss oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.showDuration != widget.showDuration && _isShowing) {
+      _startTimer();
+    }
+  }
+
+  void _handleControllerChanged() {
+    if (!mounted) return;
+    if (_isShowing) {
+      _startTimer();
+    } else {
+      _cancelTimer();
+    }
+  }
+
+  void _startTimer() {
+    _cancelTimer();
+    final showDuration = widget.showDuration;
+    if (showDuration == null || showDuration <= Duration.zero) return;
+    _dismissTimer = Timer(showDuration, () {
+      _controller?.hide();
+    });
+  }
+
+  void _cancelTimer() {
+    _dismissTimer?.cancel();
+    _dismissTimer = null;
+  }
+
+  @override
+  void dispose() {
+    _cancelTimer();
+    _controller?.removeListener(_handleControllerChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
+}
