@@ -1,0 +1,20 @@
+name: anchor
+description: A Flutter package for dynamic anchored overlays, including tooltips, popovers, and more
+version: 0.0.1
+homepage: https://github.com/khoadng/anchor
+repository: https://github.com/khoadng/anchor
+issue_tracker: https://github.com/khoadng/anchor/issues
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
