@@ -5,28 +5,21 @@ import 'package:flutter_anchor/flutter_anchor.dart';
 ///
 /// This example shows how to use [AnchorContextMenu] to create
 /// context menus that appear at the cursor position.
-class ContextMenuDemo extends StatefulWidget {
+class ContextMenuDemo extends StatelessWidget {
   const ContextMenuDemo({super.key});
 
   @override
-  State<ContextMenuDemo> createState() => _ContextMenuDemoState();
-}
-
-class _ContextMenuDemoState extends State<ContextMenuDemo> {
-  final _menuController = AnchorContextMenuController();
-
-  @override
-  void dispose() {
-    _menuController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final isDesktop = switch (Theme.of(context).platform) {
+      TargetPlatform.macOS => true,
+      TargetPlatform.linux => true,
+      TargetPlatform.windows => true,
+      _ => false,
+    };
+
     return Scaffold(
       appBar: AppBar(title: const Text('Context Menu Demo')),
       body: AnchorContextMenu(
-        controller: _menuController,
         menuBuilder: (context) {
           return Material(
             elevation: 8,
@@ -45,7 +38,7 @@ class _ContextMenuDemoState extends State<ContextMenuDemo> {
                     icon: Icons.content_cut,
                     label: 'Cut',
                     onTap: () {
-                      _menuController.hide();
+                      context.hideMenu();
                       ScaffoldMessenger.of(
                         context,
                       ).showSnackBar(const SnackBar(content: Text('Cut')));
@@ -55,7 +48,7 @@ class _ContextMenuDemoState extends State<ContextMenuDemo> {
                     icon: Icons.content_copy,
                     label: 'Copy',
                     onTap: () {
-                      _menuController.hide();
+                      context.hideMenu();
                       ScaffoldMessenger.of(
                         context,
                       ).showSnackBar(const SnackBar(content: Text('Copy')));
@@ -65,7 +58,7 @@ class _ContextMenuDemoState extends State<ContextMenuDemo> {
                     icon: Icons.content_paste,
                     label: 'Paste',
                     onTap: () {
-                      _menuController.hide();
+                      context.hideMenu();
                       ScaffoldMessenger.of(
                         context,
                       ).showSnackBar(const SnackBar(content: Text('Paste')));
@@ -76,15 +69,15 @@ class _ContextMenuDemoState extends State<ContextMenuDemo> {
             ),
           );
         },
-        child: GestureDetector(
+        childBuilder: (context) => GestureDetector(
           onSecondaryTapDown: isDesktop
               ? (event) {
-                  _menuController.show(event.globalPosition);
+                  context.showMenu(event.globalPosition);
                 }
               : null,
           onLongPressStart: !isDesktop
               ? (details) {
-                  _menuController.show(details.globalPosition);
+                  context.showMenu(details.globalPosition);
                 }
               : null,
           child: Container(
@@ -115,13 +108,6 @@ class _ContextMenuDemoState extends State<ContextMenuDemo> {
       ),
     );
   }
-
-  bool get isDesktop => switch (Theme.of(context).platform) {
-        TargetPlatform.macOS => true,
-        TargetPlatform.linux => true,
-        TargetPlatform.windows => true,
-        _ => false,
-      };
 }
 
 class _ContextMenuItem extends StatelessWidget {

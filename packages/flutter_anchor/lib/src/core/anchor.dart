@@ -36,6 +36,7 @@ class Anchor extends StatefulWidget {
     this.backdropBuilder,
     this.onShow,
     this.onHide,
+    this.enabled,
   });
 
   /// The widget that the overlay is anchored to.
@@ -100,6 +101,16 @@ class Anchor extends StatefulWidget {
 
   /// {@macro anchor_on_hide}
   final VoidCallback? onHide;
+
+  /// {@template anchor_enabled}
+  /// Whether this widget is enabled.
+  ///
+  /// When disabled, the widget will not trigger the overlay and will not
+  /// consume or intercept any events.
+  ///
+  /// Defaults to `true`.
+  /// {@endtemplate}
+  final bool? enabled;
 
   @override
   State<Anchor> createState() => _AnchorState();
@@ -274,10 +285,11 @@ class _AnchorState extends State<Anchor> {
 
   @override
   Widget build(BuildContext context) {
+    final enabled = widget.enabled ?? true;
     final triggerMode = _effectiveTriggerMode;
-    final enableHover = triggerMode is HoverTriggerMode;
-    final enableTap = triggerMode is TapTriggerMode;
-    final enableFocus = triggerMode is FocusTriggerMode;
+    final enableHover = enabled && triggerMode is HoverTriggerMode;
+    final enableTap = enabled && triggerMode is TapTriggerMode;
+    final enableFocus = enabled && triggerMode is FocusTriggerMode;
     final enableOverlayHover =
         AnchorConfig.maybeOf(context)?.enableOverlayHover ?? true;
 
@@ -305,12 +317,12 @@ class _AnchorState extends State<Anchor> {
       onHide: widget.onHide,
       overlayBuilder: (context) {
         return TapRegion(
-          groupId: _tapRegionGroupId,
+          groupId: enabled ? _tapRegionGroupId : null,
           onTapOutside:
               (enableTap || (enableFocus && _effectiveDismissOnTapOutside))
                   ? _handleTapOutside
                   : null,
-          consumeOutsideTaps: _effectiveConsumeOutsideTap,
+          consumeOutsideTaps: enabled && _effectiveConsumeOutsideTap,
           child: FocusScope(
             descendantsAreTraversable: false,
             canRequestFocus: false,
@@ -334,7 +346,7 @@ class _AnchorState extends State<Anchor> {
         );
       },
       child: TapRegion(
-        groupId: _tapRegionGroupId,
+        groupId: enabled ? _tapRegionGroupId : null,
         child: GestureDetector(
           onTap: enableTap ? _handleTap : null,
           child: MouseRegion(

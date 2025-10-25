@@ -15,8 +15,6 @@ class AnchorTooltip extends StatelessWidget {
   /// Creates an anchor tooltip.
   const AnchorTooltip({
     super.key,
-    required this.child,
-    required this.message,
     this.controller,
     this.spacing,
     this.offset,
@@ -39,6 +37,9 @@ class AnchorTooltip extends StatelessWidget {
     this.showDuration,
     this.onShow,
     this.onHide,
+    this.enabled,
+    required this.message,
+    required this.child,
   });
 
   /// The widget that the overlay is anchored to.
@@ -113,6 +114,9 @@ class AnchorTooltip extends StatelessWidget {
   /// {@macro anchor_on_hide}
   final VoidCallback? onHide;
 
+  /// {@macro anchor_enabled}
+  final bool? enabled;
+
   @override
   Widget build(BuildContext context) {
     final effectivePadding =
@@ -147,6 +151,7 @@ class AnchorTooltip extends StatelessWidget {
         border: border,
         onShow: onShow,
         onHide: onHide,
+        enabled: enabled,
         child: child,
       ),
     );

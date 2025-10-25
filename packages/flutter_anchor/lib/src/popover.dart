@@ -16,8 +16,6 @@ class AnchorPopover extends StatelessWidget {
   /// Creates an anchor popover.
   const AnchorPopover({
     super.key,
-    required this.child,
-    required this.overlayBuilder,
     this.controller,
     this.spacing,
     this.offset,
@@ -40,6 +38,9 @@ class AnchorPopover extends StatelessWidget {
     this.border,
     this.onShow,
     this.onHide,
+    this.enabled,
+    required this.overlayBuilder,
+    required this.child,
   });
 
   /// The widget that the overlay is anchored to.
@@ -114,6 +115,9 @@ class AnchorPopover extends StatelessWidget {
   /// The border for the popover overlay.
   final BorderSide? border;
 
+  /// {@macro anchor_enabled}
+  final bool? enabled;
+
   @override
   Widget build(BuildContext context) {
     return Anchor(
@@ -133,6 +137,7 @@ class AnchorPopover extends StatelessWidget {
       backdropBuilder: backdropBuilder,
       onShow: onShow,
       onHide: onHide,
+      enabled: enabled,
       overlayBuilder: (context) {
         return Builder(
           builder: (context) {

@@ -4,11 +4,45 @@ import 'package:flutter/widgets.dart';
 import 'core/controller.dart';
 import 'core/raw_anchor.dart';
 
+/// Inherited widget that provides access to the [AnchorContextMenuController].
+class _AnchorContextMenuScope extends InheritedWidget {
+  const _AnchorContextMenuScope({
+    required this.controller,
+    required super.child,
+  });
+
+  final AnchorContextMenuController controller;
+
+  @override
+  bool updateShouldNotify(_AnchorContextMenuScope oldWidget) {
+    return controller != oldWidget.controller;
+  }
+}
+
 /// Controller for managing context menu state and position.
 class AnchorContextMenuController extends ChangeNotifier {
   VirtualReference? _reference;
   AnchorController? _anchor;
+  var _enabled = true;
   VirtualReference? get _internalReference => _reference;
+
+  /// Retrieves the [AnchorContextMenuController] from the closest [AnchorContextMenu] ancestor.
+  ///
+  /// If no ancestor is found, returns null.
+  static AnchorContextMenuController? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<_AnchorContextMenuScope>()
+        ?.controller;
+  }
+
+  /// Retrieves the [AnchorContextMenuController] from the closest [AnchorContextMenu] ancestor.
+  ///
+  /// Throws an error if no ancestor is found.
+  static AnchorContextMenuController of(BuildContext context) {
+    final controller = maybeOf(context);
+    assert(controller != null, 'No AnchorContextMenu found in context');
+    return controller!;
+  }
 
   /// Whether the menu is currently shown.
   bool get isShowing => _anchor?.isShowing ?? false;
@@ -27,6 +61,12 @@ class AnchorContextMenuController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _updateEnabled(bool enabled) {
+    if (_enabled == enabled) return;
+    _enabled = enabled;
+    notifyListeners();
+  }
+
   void _handleAnchorChange() {
     if (!isShowing) {
       _reference = null;
@@ -36,6 +76,7 @@ class AnchorContextMenuController extends ChangeNotifier {
 
   /// Shows the menu at the specified position.
   void show(Offset position) {
+    if (!_enabled) return;
     final reference = VirtualReference.fromPoint(position);
     _reference = reference;
     _anchor?.show();
@@ -58,27 +99,54 @@ class AnchorContextMenuController extends ChangeNotifier {
   }
 }
 
+/// Extension methods on [BuildContext] for convenient access methods of [AnchorContextMenuController].
+extension AnchorContextMenuExtensions on BuildContext {
+  /// Shows the context menu at the specified position.
+  void showMenu(Offset position) {
+    AnchorContextMenuController.of(this).show(position);
+  }
+
+  /// Hides the context menu.
+  void hideMenu() {
+    AnchorContextMenuController.of(this).hide();
+  }
+
+  /// Toggles the context menu at the specified position.
+  void toggleMenu(Offset position) {
+    AnchorContextMenuController.of(this).toggle(position);
+  }
+}
+
+/// Extension methods on [BuildContext] for convenient access to [AnchorContextMenuController].
+extension AnchorContextMenuControllerExtensions on BuildContext {
+  /// Returns the [AnchorContextMenuController] if available, otherwise null.
+  AnchorContextMenuController? get contextMenuController {
+    return AnchorContextMenuController.maybeOf(this);
+  }
+}
+
 /// Creates a context menu that appears at a virtual position.
 class AnchorContextMenu extends StatefulWidget {
   /// Creates a context menu.
   const AnchorContextMenu({
     super.key,
-    required this.child,
-    required this.controller,
-    required this.menuBuilder,
     this.placement,
     this.onShow,
     this.onDismiss,
+    this.enabled,
+    this.controller,
+    required this.menuBuilder,
+    required this.childBuilder,
   });
 
-  /// The widget that the context menu is anchored to.
-  final Widget child;
-
-  /// Controller for managing the menu state and position.
-  final AnchorContextMenuController controller;
+  /// The controller for managing the context menu.
+  final AnchorContextMenuController? controller;
 
   /// Builder for the menu overlay.
   final WidgetBuilder menuBuilder;
+
+  /// Builder for the child widget that triggers the menu.
+  final WidgetBuilder childBuilder;
 
   /// The placement of the menu relative to the virtual reference.
   ///
@@ -91,63 +159,86 @@ class AnchorContextMenu extends StatefulWidget {
   /// Callback when the menu is dismissed.
   final VoidCallback? onDismiss;
 
+  /// {@macro anchor_enabled}
+  final bool? enabled;
+
   @override
   State<AnchorContextMenu> createState() => _AnchorContextMenuState();
 }
 
 class _AnchorContextMenuState extends State<AnchorContextMenu> {
   late final AnchorController _anchorController;
+  late final AnchorContextMenuController _controller;
 
   @override
   void initState() {
     super.initState();
     _anchorController = AnchorController();
-    widget.controller._attach(_anchorController);
+    _controller = widget.controller ?? AnchorContextMenuController();
+    _controller._attach(_anchorController);
+    _controller._updateEnabled(widget.enabled ?? true);
   }
 
   @override
   void didUpdateWidget(AnchorContextMenu oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
-      oldWidget.controller._detach();
-      widget.controller._attach(_anchorController);
+      _controller._detach();
+      _controller = widget.controller ?? AnchorContextMenuController();
+      _controller._attach(_anchorController);
+    }
+    if (oldWidget.enabled != widget.enabled) {
+      _controller._updateEnabled(widget.enabled ?? true);
     }
   }
 
   @override
   void dispose() {
-    widget.controller._detach();
+    _controller._detach();
+    if (widget.controller == null) {
+      _controller.dispose();
+    }
     _anchorController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: widget.controller,
-      builder: (context, child) {
-        final ref = widget.controller._internalReference;
+    final enabled = widget.enabled ?? true;
 
-        return RawAnchor(
-          controller: _anchorController,
-          placement: widget.placement ?? Placement.bottomStart,
-          onHide: widget.onDismiss,
-          onShow: widget.onShow,
-          middlewares: [
-            if (ref != null) VirtualReferenceMiddleware(ref),
-            const FlipMiddleware(preferredDirection: AxisDirection.down),
-            const ShiftMiddleware(preferredDirection: AxisDirection.down),
-          ],
-          overlayBuilder: (context) {
-            return TapRegion(
-              onTapOutside: (_) => widget.controller.hide(),
-              child: widget.menuBuilder(context),
-            );
-          },
-          child: child!,
-        );
-      },
-      child: widget.child,
+    return _AnchorContextMenuScope(
+      controller: _controller,
+      child: ListenableBuilder(
+        listenable: _controller,
+        builder: (context, _) {
+          final ref = _controller._internalReference;
+
+          return RawAnchor(
+            controller: _anchorController,
+            placement: widget.placement ?? Placement.bottomStart,
+            onHide: widget.onDismiss,
+            onShow: widget.onShow,
+            middlewares: [
+              if (ref != null) VirtualReferenceMiddleware(ref),
+              const FlipMiddleware(preferredDirection: AxisDirection.down),
+              const ShiftMiddleware(preferredDirection: AxisDirection.down),
+            ],
+            overlayBuilder: (context) {
+              return TapRegion(
+                onTapOutside: enabled ? (_) => _controller.hide() : null,
+                child: _AnchorContextMenuScope(
+                  controller: _controller,
+                  child: Builder(builder: widget.menuBuilder),
+                ),
+              );
+            },
+            child: _AnchorContextMenuScope(
+              controller: _controller,
+              child: Builder(builder: widget.childBuilder),
+            ),
+          );
+        },
+      ),
     );
   }
 }

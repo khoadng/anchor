@@ -127,11 +127,8 @@ Anchor(
 Use `AnchorContextMenu` to show a menu at a specific screen coordinate, such as a cursor position.
 
 ```dart
-final _menuController = AnchorContextMenuController();
-
 // 1. Wrap your main content area
 AnchorContextMenu(
-  controller: _menuController,
   menuBuilder: (context) {
     // 3. Build your menu
     return Material(
@@ -141,25 +138,25 @@ AnchorContextMenu(
         children: [
           ListTile(
             title: const Text('Copy'),
-            onTap: () => _menuController.hide(),
+            onTap: () => context.hideMenu(),
           ),
           ListTile(
             title: const Text('Paste'),
-            onTap: () => _menuController.hide(),
+            onTap: () => context.hideMenu(),
           ),
         ],
       ),
     );
   },
   // 2. Add a gesture detector to show the menu
-  child: GestureDetector(
+  childBuilder: (context) => GestureDetector(
     onSecondaryTapDown: (event) {
       // Show the menu at the global cursor position
-      _menuController.show(event.globalPosition);
+      context.showMenu(event.globalPosition);
     },
     onLongPressStart: (details) {
       // Also show for long-press on mobile
-      _menuController.show(details.globalPosition);
+      context.showMenu(details.globalPosition);
     },
     child: Container(
       color: Colors.grey[100],
