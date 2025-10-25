@@ -380,10 +380,8 @@ class _RawAnchorState extends State<RawAnchor>
                 children: [
                   if (widget.backdropBuilder case final builder?)
                     Positioned.fill(
-                      child: IgnorePointer(
-                        child: Builder(
-                          builder: builder,
-                        ),
+                      child: Builder(
+                        builder: builder,
                       ),
                     ),
                   CompositedTransformFollower(
