@@ -1,3 +1,4 @@
+import 'package:anchor/anchor.dart';
 import 'package:flutter/widgets.dart';
 
 import 'controller.dart';
@@ -36,6 +37,7 @@ class AnchorData extends InheritedWidget {
     super.key,
     required this.controller,
     required this.geometry,
+    required this.metadata,
     required super.child,
   });
 
@@ -44,6 +46,9 @@ class AnchorData extends InheritedWidget {
 
   /// The geometric information of the overlay.
   final AnchorGeometry geometry;
+
+  /// The metadata produced by positioning middleware.
+  final PositionMetadata metadata;
 
   /// Retrieves the [AnchorController] from the nearest [AnchorData] ancestor.
   ///
@@ -66,6 +71,8 @@ class AnchorData extends InheritedWidget {
 
   @override
   bool updateShouldNotify(AnchorData oldWidget) {
-    return controller != oldWidget.controller || geometry != oldWidget.geometry;
+    return controller != oldWidget.controller ||
+        geometry != oldWidget.geometry ||
+        metadata != oldWidget.metadata;
   }
 }

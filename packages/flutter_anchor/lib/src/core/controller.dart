@@ -21,6 +21,7 @@ class AnchorController extends ChangeNotifier {
     direction: AxisDirection.down,
     alignment: Alignment.topLeft,
   );
+  var _metadata = const PositionMetadata();
 
   /// Whether the overlay is currently showing.
   bool get isShowing => _isShowing;
@@ -30,6 +31,9 @@ class AnchorController extends ChangeNotifier {
 
   /// The current geometry information for the overlay.
   AnchorGeometry get geometry => _geometry;
+
+  /// The metadata produced by positioning middleware during the last calculation.
+  PositionMetadata get metadata => _metadata;
 
   /// Shows the overlay.
   void show() {
@@ -49,16 +53,18 @@ class AnchorController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Updates the overlay's anchor points and geometry.
+  /// Updates the overlay's anchor points, geometry, and metadata.
   @internal
   void setData(
     AnchorPoints points,
-    AnchorGeometry geometry, {
+    AnchorGeometry geometry,
+    PositionMetadata metadata, {
     bool notify = true,
   }) {
-    if (_points != points || _geometry != geometry) {
+    if (_points != points || _geometry != geometry || _metadata != metadata) {
       _points = points;
       _geometry = geometry;
+      _metadata = metadata;
       if (notify) notifyListeners();
     }
   }

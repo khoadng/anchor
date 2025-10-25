@@ -312,7 +312,12 @@ class _RawAnchorState extends State<RawAnchor>
       overlayHeight: effectiveOverlayHeight,
     );
 
-    _controller.setData(newPoints, geometry, notify: notify);
+    _controller.setData(
+      newPoints,
+      geometry,
+      result.metadata,
+      notify: notify,
+    );
   }
 
   Widget _defaultTransitionBuilder(
@@ -376,6 +381,7 @@ class _RawAnchorState extends State<RawAnchor>
             return AnchorData(
               controller: _controller,
               geometry: geometry,
+              metadata: _controller.metadata,
               child: Stack(
                 children: [
                   if (widget.backdropBuilder case final builder?)
