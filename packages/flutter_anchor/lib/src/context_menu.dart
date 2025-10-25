@@ -1,4 +1,5 @@
 import 'package:anchor/anchor.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 import 'core/controller.dart';
@@ -136,6 +137,8 @@ class AnchorContextMenu extends StatefulWidget {
     this.onDismiss,
     this.enabled,
     this.controller,
+    this.backdropBuilder,
+    this.dismissOnTapOutside,
     required this.menuBuilder,
     required this.childBuilder,
   });
@@ -162,6 +165,14 @@ class AnchorContextMenu extends StatefulWidget {
 
   /// {@macro anchor_enabled}
   final bool? enabled;
+
+  /// {@macro anchor_backdrop_builder}
+  final WidgetBuilder? backdropBuilder;
+
+  /// Whether to automatically hide the menu when tapping outside.
+  ///
+  /// Defaults to true.
+  final bool? dismissOnTapOutside;
 
   @override
   State<AnchorContextMenu> createState() => _AnchorContextMenuState();
@@ -225,20 +236,24 @@ class _AnchorContextMenuState extends State<AnchorContextMenu> {
               placement: widget.placement ?? Placement.bottomStart,
               onHide: widget.onDismiss,
               onShow: widget.onShow,
+              backdropBuilder: widget.backdropBuilder,
               overlayBuilder: (context) {
-              return TapRegion(
-                onTapOutside: enabled ? (_) => _controller.hide() : null,
-                child: _AnchorContextMenuScope(
-                  controller: _controller,
-                  child: Builder(builder: widget.menuBuilder),
-                ),
-              );
-            },
-            child: _AnchorContextMenuScope(
-              controller: _controller,
-              child: Builder(builder: widget.childBuilder),
-            ),
+                final dismissOnTapOutside = widget.dismissOnTapOutside ?? true;
+                return TapRegion(
+                  onTapOutside: (enabled && dismissOnTapOutside)
+                      ? (_) => _controller.hide()
+                      : null,
+                  child: _AnchorContextMenuScope(
+                    controller: _controller,
+                    child: Builder(builder: widget.menuBuilder),
+                  ),
+                );
+              },
+              child: _AnchorContextMenuScope(
+                controller: _controller,
+                child: Builder(builder: widget.childBuilder),
               ),
+            ),
           );
         },
       ),
