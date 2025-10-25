@@ -2,6 +2,7 @@ import 'package:anchor/anchor.dart';
 import 'package:flutter/widgets.dart';
 
 import 'core/controller.dart';
+import 'core/middlewares.dart';
 import 'core/raw_anchor.dart';
 
 /// Inherited widget that provides access to the [AnchorContextMenuController].
@@ -213,17 +214,18 @@ class _AnchorContextMenuState extends State<AnchorContextMenu> {
         builder: (context, _) {
           final ref = _controller._internalReference;
 
-          return RawAnchor(
-            controller: _anchorController,
-            placement: widget.placement ?? Placement.bottomStart,
-            onHide: widget.onDismiss,
-            onShow: widget.onShow,
+          return AnchorMiddlewares(
             middlewares: [
               if (ref != null) VirtualReferenceMiddleware(ref),
               const FlipMiddleware(preferredDirection: AxisDirection.down),
               const ShiftMiddleware(preferredDirection: AxisDirection.down),
             ],
-            overlayBuilder: (context) {
+            child: RawAnchor(
+              controller: _anchorController,
+              placement: widget.placement ?? Placement.bottomStart,
+              onHide: widget.onDismiss,
+              onShow: widget.onShow,
+              overlayBuilder: (context) {
               return TapRegion(
                 onTapOutside: enabled ? (_) => _controller.hide() : null,
                 child: _AnchorContextMenuScope(
@@ -236,6 +238,7 @@ class _AnchorContextMenuState extends State<AnchorContextMenu> {
               controller: _controller,
               child: Builder(builder: widget.childBuilder),
             ),
+              ),
           );
         },
       ),

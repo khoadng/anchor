@@ -172,41 +172,43 @@ AnchorContextMenu(
 
 ### Positioning Middleware
 
-While `AnchorTooltip` and `AnchorPopover` or `Anchor` handle common cases, the base `RawAnchor` widget gives you full control over the positioning logic via a **middleware pipeline**.
-This system allows you to compose a list of behaviors that run in order to compute the final position of the overlay. You can implement a custom middleware by extending the `PositioningMiddleware` class to create your own placement logic.
+While `AnchorTooltip`, `AnchorPopover`, and `Anchor` handle common cases with built-in positioning logic, you can customize how overlays are positioned using the `AnchorMiddlewares` widget.
+
+This system allows you to compose a list of behaviors that run in order to compute the final position of the overlay. You can implement custom middleware by extending the `PositioningMiddleware` class.
 
 ```dart
 final _controller = AnchorController();
 
-RawAnchor(
-  // A controller to manage the overlay state
-  controller: _controller,
-
-  // This is the initial, preferred placement
-  placement: Placement.top,
-
-  // Define the middleware pipeline
+// Wrap your RawAnchor with AnchorMiddlewares to define custom positioning
+AnchorMiddlewares(
   middlewares: const [
     // 1. Add a 10px gap between the child and overlay
     OffsetMiddleware(mainAxis: 10),
-    
-    // 2. If it overflows, try Placement.bottom
+
+    // 2. If it overflows, try the opposite side
     FlipMiddleware(preferredDirection: AxisDirection.up),
-    
+
     // 3. If it still overflows (e.g., on the sides), shift it
     ShiftMiddleware(preferredDirection: AxisDirection.up),
   ],
+  child: RawAnchor(
+    // A controller to manage the overlay state
+    controller: _controller,
 
-  overlayBuilder: (context) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      color: Colors.black,
-      child: const Text('My Overlay', style: TextStyle(color: Colors.white)),
-    );
-  },
-  child: ElevatedButton(
-    onPressed: () {},
-    child: const Text('Tap Me'),
+    // This is the initial, preferred placement
+    placement: Placement.top,
+
+    overlayBuilder: (context) {
+      return Container(
+        padding: const EdgeInsets.all(8),
+        color: Colors.black,
+        child: const Text('My Overlay', style: TextStyle(color: Colors.white)),
+      );
+    },
+    child: ElevatedButton(
+      onPressed: () {},
+      child: const Text('Tap Me'),
+    ),
   ),
 )
 ```

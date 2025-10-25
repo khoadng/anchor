@@ -6,18 +6,19 @@ import 'anchor.dart';
 import 'controller.dart';
 import 'data.dart';
 import 'geometry.dart';
+import 'middlewares.dart';
 
 const _defaultTransitionDuration = Duration(milliseconds: 100);
 const _defaultScrollBehavior = AnchorScrollBehavior.dismiss;
 
 /// A low-level widget that displays a pop-up overlay relative to its child.
 ///
-/// For positioning, it uses a list of [PositioningMiddleware] to calculate
-/// the final position of the overlay. This allows for complete customization
-/// of the positioning logic.
+/// For positioning, this widget uses [PositioningMiddleware] obtained from
+/// an ancestor [AnchorMiddlewares] widget. If no [AnchorMiddlewares] is found,
+/// the overlay will show at the preferred placement without any adjustment logic.
 ///
-/// For a widget that includes built-in trigger logic and default positioning,
-/// see [Anchor].
+/// For a widget that includes built-in trigger logic and default positioning
+/// middlewares, see [Anchor].
 class RawAnchor extends StatefulWidget {
   /// Creates a [RawAnchor] widget.
   const RawAnchor({
@@ -25,7 +26,6 @@ class RawAnchor extends StatefulWidget {
     required this.child,
     required this.overlayBuilder,
     required this.placement,
-    required this.middlewares,
     required this.controller,
     this.offset,
     this.overlayHeight,
@@ -46,12 +46,6 @@ class RawAnchor extends StatefulWidget {
 
   /// The preferred placement to show the overlay if space allows.
   final Placement placement;
-
-  /// The list of positioning middleware to run, in order.
-  ///
-  /// These middleware control how the overlay is positioned relative to the
-  /// child, including flipping, shifting, and offset logic.
-  final List<PositioningMiddleware> middlewares;
 
   /// {@template anchor_controller}
   /// An controller to manage the overlay's state programmatically.
@@ -128,6 +122,8 @@ class _RawAnchorState extends State<RawAnchor>
 
   Size? _measuredOverlaySize;
 
+  List<PositioningMiddleware>? _lastMiddlewares;
+
   bool get _isWaitingForMeasurement {
     final needsWidth = widget.overlayWidth == null;
     final needsHeight = widget.overlayHeight == null;
@@ -163,27 +159,6 @@ class _RawAnchorState extends State<RawAnchor>
     if (oldWidget.transitionDuration != widget.transitionDuration) {
       _animationController.duration = _effectiveTransitionDuration;
     }
-
-    if (_middlewaresChanged(oldWidget.middlewares, widget.middlewares)) {
-      if (_overlayController.isShowing) {
-        _measuredOverlaySize = null;
-        _calculateAnchorPoints(notify: false);
-      }
-    }
-  }
-
-  bool _middlewaresChanged(
-    List<PositioningMiddleware> oldList,
-    List<PositioningMiddleware> newList,
-  ) {
-    if (identical(oldList, newList)) return false;
-    if (oldList.length != newList.length) return true;
-
-    for (var i = 0; i < oldList.length; i++) {
-      if (oldList[i] != newList[i]) return true;
-    }
-
-    return false;
   }
 
   @override
@@ -191,12 +166,27 @@ class _RawAnchorState extends State<RawAnchor>
     super.didChangeDependencies();
 
     final currentSize = MediaQuery.sizeOf(context);
+    final currentMiddlewares = AnchorMiddlewares.of(context);
+
+    // Check if middlewares changed (AnchorMiddlewares.updateShouldNotify already
+    // filtered most cases, but didChangeDependencies can be called for other
+    // reasons like MediaQuery or Scrollable changes, so we verify here)
+    final middlewaresChanged = !identical(_lastMiddlewares, currentMiddlewares);
 
     if (_lastScreenSize != currentSize && _overlayController.isShowing) {
       _lastScreenSize = currentSize;
-      _calculateAnchorPoints();
+      _calculateAnchorPoints(notify: false);
     } else {
       _lastScreenSize = currentSize;
+    }
+
+    // Recalculate if middlewares changed and overlay is showing
+    if (middlewaresChanged && _overlayController.isShowing) {
+      _lastMiddlewares = currentMiddlewares;
+      _measuredOverlaySize = null;
+      _calculateAnchorPoints(notify: false);
+    } else {
+      _lastMiddlewares = currentMiddlewares;
     }
 
     if (widget.scrollBehavior != AnchorScrollBehavior.none) {
@@ -297,8 +287,9 @@ class _RawAnchorState extends State<RawAnchor>
       overlayWidth: effectiveOverlayWidth,
     );
 
+    final middlewares = _lastMiddlewares ?? AnchorMiddlewares.of(context);
     final finalState = PositioningPipeline(
-      middlewares: widget.middlewares,
+      middlewares: middlewares,
     ).run(
       placement: widget.placement,
       config: config,

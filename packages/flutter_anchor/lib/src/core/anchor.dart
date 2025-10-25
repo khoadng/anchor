@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'config.dart';
 import 'controller.dart';
 import 'data.dart';
+import 'middlewares.dart';
 import 'raw_anchor.dart';
 import 'trigger.dart';
 
@@ -277,7 +278,7 @@ class _AnchorState extends State<Anchor> {
     final placement = widget.placement ?? Placement.top;
     final enableFlip = widget.enableFlip ?? true;
     final enableShift = widget.enableShift ?? true;
-    final spacing = widget.spacing ?? 8.0;
+    final spacing = widget.spacing ?? 4;
 
     return [
       if (enableFlip)
@@ -312,70 +313,72 @@ class _AnchorState extends State<Anchor> {
       );
     }
 
-    return RawAnchor(
-      controller: _controller,
-      placement: widget.placement ?? Placement.top,
+    return AnchorMiddlewares(
       middlewares: _buildMiddlewares(),
-      offset: widget.offset,
-      overlayHeight: widget.overlayHeight,
-      overlayWidth: widget.overlayWidth,
-      scrollBehavior: widget.scrollBehavior,
-      transitionDuration: widget.transitionDuration,
-      transitionBuilder: widget.transitionBuilder,
-      backdropBuilder: widget.backdropBuilder,
-      onShow: widget.onShow,
-      onHide: widget.onHide,
-      overlayBuilder: (context) {
-        return TapRegion(
-          groupId: enabled ? _tapRegionGroupId : null,
-          onTapOutside: (enableTap ||
-                  enableLongPress ||
-                  (enableFocus && _effectiveDismissOnTapOutside))
-              ? _handleTapOutside
-              : null,
-          consumeOutsideTaps: enabled && _effectiveConsumeOutsideTap,
-          child: FocusScope(
-            descendantsAreTraversable: false,
-            canRequestFocus: false,
-            skipTraversal: true,
-            onFocusChange: (hasFocus) {
-              if (enableFocus) {
-                _isOverlayFocused.value = hasFocus;
-                _handleFocusChange();
-              }
-            },
-            child: MouseRegion(
-              onEnter: enableHover && enableOverlayHover
-                  ? (_) => _isOverlayHovered.value = true
-                  : null,
-              onExit: enableHover && enableOverlayHover
-                  ? (_) => _isOverlayHovered.value = false
-                  : null,
-              child: widget.overlayBuilder(context),
+      child: RawAnchor(
+        controller: _controller,
+        placement: widget.placement ?? Placement.top,
+        offset: widget.offset,
+        overlayHeight: widget.overlayHeight,
+        overlayWidth: widget.overlayWidth,
+        scrollBehavior: widget.scrollBehavior,
+        transitionDuration: widget.transitionDuration,
+        transitionBuilder: widget.transitionBuilder,
+        backdropBuilder: widget.backdropBuilder,
+        onShow: widget.onShow,
+        onHide: widget.onHide,
+        overlayBuilder: (context) {
+          return TapRegion(
+            groupId: enabled ? _tapRegionGroupId : null,
+            onTapOutside: (enableTap ||
+                    enableLongPress ||
+                    (enableFocus && _effectiveDismissOnTapOutside))
+                ? _handleTapOutside
+                : null,
+            consumeOutsideTaps: enabled && _effectiveConsumeOutsideTap,
+            child: FocusScope(
+              descendantsAreTraversable: false,
+              canRequestFocus: false,
+              skipTraversal: true,
+              onFocusChange: (hasFocus) {
+                if (enableFocus) {
+                  _isOverlayFocused.value = hasFocus;
+                  _handleFocusChange();
+                }
+              },
+              child: MouseRegion(
+                onEnter: enableHover && enableOverlayHover
+                    ? (_) => _isOverlayHovered.value = true
+                    : null,
+                onExit: enableHover && enableOverlayHover
+                    ? (_) => _isOverlayHovered.value = false
+                    : null,
+                child: widget.overlayBuilder(context),
+              ),
             ),
-          ),
-        );
-      },
-      child: TapRegion(
-        groupId: enabled ? _tapRegionGroupId : null,
-        child: GestureDetector(
-          onTap: enableTap ? _handleTap : null,
-          onLongPress: enableLongPress ? _handleLongPress : null,
-          child: MouseRegion(
-            onEnter: enableHover
-                ? (_) {
-                    _isChildHovered.value = true;
-                    _hideTimer?.cancel();
-                    _tryShow();
-                  }
-                : null,
-            onExit: enableHover
-                ? (_) {
-                    _showTimer?.cancel();
-                    _isChildHovered.value = false;
-                  }
-                : null,
-            child: child,
+          );
+        },
+        child: TapRegion(
+          groupId: enabled ? _tapRegionGroupId : null,
+          child: GestureDetector(
+            onTap: enableTap ? _handleTap : null,
+            onLongPress: enableLongPress ? _handleLongPress : null,
+            child: MouseRegion(
+              onEnter: enableHover
+                  ? (_) {
+                      _isChildHovered.value = true;
+                      _hideTimer?.cancel();
+                      _tryShow();
+                    }
+                  : null,
+              onExit: enableHover
+                  ? (_) {
+                      _showTimer?.cancel();
+                      _isChildHovered.value = false;
+                    }
+                  : null,
+              child: child,
+            ),
           ),
         ),
       ),
