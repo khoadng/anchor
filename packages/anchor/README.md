@@ -2,7 +2,7 @@
 
 This is the core positioning engine for the `flutter_anchor` package. It provides a middleware-based pipeline for calculating the optimal position of a floating element (like a tooltip or popover) relative to an anchor element.
 
-This engine is inspired by the powerful JavaScript library [Floating UI](httpsst://floating-ui.com/) and provides a similar, extensible architecture in pure Dart.
+This engine is inspired by the powerful JavaScript library [Floating UI](https://floating-ui.com/) and provides a similar, extensible architecture in pure Dart.
 
 -----
 
