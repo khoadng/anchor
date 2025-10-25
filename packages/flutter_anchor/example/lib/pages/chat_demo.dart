@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_anchor/flutter_anchor.dart';
 
+import '../utils.dart';
+
 class ListViewDemo extends StatelessWidget {
   const ListViewDemo({super.key});
 
@@ -94,9 +96,11 @@ class _ChatMessageState extends State<_ChatMessage> {
             child: Anchor(
               overlayHeight: 80,
               overlayWidth: 420,
-              triggerMode: const HoverTriggerMode(
-                waitDuration: Duration(milliseconds: 200),
-              ),
+              triggerMode: isDesktop
+                  ? const HoverTriggerMode(
+                      waitDuration: Duration(milliseconds: 200),
+                    )
+                  : const LongPressTriggerMode(),
               offset: Offset.zero,
               placement: Placement.top,
               enableFlip: false,

@@ -1,7 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_anchor/flutter_anchor.dart';
 import 'package:intl/intl.dart';
+
+import '../utils.dart';
 
 class MacosDesktopDemo extends StatefulWidget {
   const MacosDesktopDemo({super.key});
@@ -527,13 +528,6 @@ class _MacosDock extends StatelessWidget {
     );
   }
 }
-
-bool get isDesktop => switch (defaultTargetPlatform) {
-      TargetPlatform.macOS => true,
-      TargetPlatform.linux => true,
-      TargetPlatform.windows => true,
-      _ => false,
-    };
 
 class _DockApp {
   _DockApp({required this.name, required this.icon, required this.color});

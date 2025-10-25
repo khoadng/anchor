@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_anchor/flutter_anchor.dart';
 
+import '../utils.dart';
+
 /// Demonstrates virtual positioning for context menus.
 ///
 /// This example shows how to use [AnchorContextMenu] to create
@@ -10,13 +12,6 @@ class ContextMenuDemo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = switch (Theme.of(context).platform) {
-      TargetPlatform.macOS => true,
-      TargetPlatform.linux => true,
-      TargetPlatform.windows => true,
-      _ => false,
-    };
-
     return Scaffold(
       appBar: AppBar(title: const Text('Context Menu Demo')),
       body: AnchorContextMenu(

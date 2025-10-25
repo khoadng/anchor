@@ -27,6 +27,11 @@ sealed class AnchorTriggerMode {
     bool? dismissOnTapOutside,
   }) = FocusTriggerMode;
 
+  /// {@macro long_press_trigger_mode}
+  const factory AnchorTriggerMode.longPress({
+    bool? consumeOutsideTap,
+  }) = LongPressTriggerMode;
+
   /// {@macro manual_trigger_mode}
   const factory AnchorTriggerMode.manual() = ManualTriggerMode;
 }
@@ -115,4 +120,23 @@ class FocusTriggerMode extends AnchorTriggerMode {
   ///
   /// Defaults to `true`.
   final bool? dismissOnTapOutside;
+}
+
+/// {@macro anchor_trigger_mode}
+/// {@template long_press_trigger_mode}
+///
+/// Shows the anchor's overlay when the user performs a long press.
+///
+/// {@endtemplate}
+class LongPressTriggerMode extends AnchorTriggerMode {
+  /// Creates a long press trigger mode.
+  const LongPressTriggerMode({
+    this.consumeOutsideTap,
+  });
+
+  /// Whether a tap outside the overlay is consumed, preventing it from
+  /// reaching widgets below.
+  ///
+  /// Defaults to `false`, allowing taps to propagate to underlying widgets.
+  final bool? consumeOutsideTap;
 }

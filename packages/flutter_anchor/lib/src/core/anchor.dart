@@ -154,6 +154,7 @@ class _AnchorState extends State<Anchor> {
 
   bool get _effectiveConsumeOutsideTap => switch (_effectiveTriggerMode) {
         TapTriggerMode(:final consumeOutsideTap?) => consumeOutsideTap,
+        LongPressTriggerMode(:final consumeOutsideTap?) => consumeOutsideTap,
         _ => _defaultConsumeOutsideTap,
       };
 
@@ -251,6 +252,14 @@ class _AnchorState extends State<Anchor> {
     }
   }
 
+  void _handleLongPress() {
+    if (_controller.isShowing) {
+      _hideOverlay();
+    } else {
+      _showOverlay();
+    }
+  }
+
   void _handleTapOutside(PointerDownEvent event) {
     if (_controller.isShowing) {
       final triggerMode = _effectiveTriggerMode;
@@ -289,6 +298,7 @@ class _AnchorState extends State<Anchor> {
     final triggerMode = _effectiveTriggerMode;
     final enableHover = enabled && triggerMode is HoverTriggerMode;
     final enableTap = enabled && triggerMode is TapTriggerMode;
+    final enableLongPress = enabled && triggerMode is LongPressTriggerMode;
     final enableFocus = enabled && triggerMode is FocusTriggerMode;
     final enableOverlayHover =
         AnchorConfig.maybeOf(context)?.enableOverlayHover ?? true;
@@ -318,10 +328,11 @@ class _AnchorState extends State<Anchor> {
       overlayBuilder: (context) {
         return TapRegion(
           groupId: enabled ? _tapRegionGroupId : null,
-          onTapOutside:
-              (enableTap || (enableFocus && _effectiveDismissOnTapOutside))
-                  ? _handleTapOutside
-                  : null,
+          onTapOutside: (enableTap ||
+                  enableLongPress ||
+                  (enableFocus && _effectiveDismissOnTapOutside))
+              ? _handleTapOutside
+              : null,
           consumeOutsideTaps: enabled && _effectiveConsumeOutsideTap,
           child: FocusScope(
             descendantsAreTraversable: false,
@@ -349,6 +360,7 @@ class _AnchorState extends State<Anchor> {
         groupId: enabled ? _tapRegionGroupId : null,
         child: GestureDetector(
           onTap: enableTap ? _handleTap : null,
+          onLongPress: enableLongPress ? _handleLongPress : null,
           child: MouseRegion(
             onEnter: enableHover
                 ? (_) {

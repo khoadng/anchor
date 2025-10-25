@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_anchor/flutter_anchor.dart';
 
+import '../utils.dart';
+
 // Wikipedia-like Link Preview Demo
 class WikiLinkDemo extends StatelessWidget {
   const WikiLinkDemo({super.key});
@@ -214,9 +216,11 @@ class _WikiLinkState extends State<_WikiLink> {
     return AnchorPopover(
       overlayHeight: 180,
       overlayWidth: 320,
-      triggerMode: const AnchorTriggerMode.hover(
-        waitDuration: Duration(milliseconds: 400),
-      ),
+      triggerMode: isDesktop
+          ? const AnchorTriggerMode.hover(
+              waitDuration: Duration(milliseconds: 400),
+            )
+          : const AnchorTriggerMode.longPress(),
       placement: Placement.topStart,
       backgroundColor: const Color(0xFF1E293B),
       arrowAlignment: 0.05,
