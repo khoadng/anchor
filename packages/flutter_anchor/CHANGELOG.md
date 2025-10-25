@@ -1,3 +1,7 @@
+## 0.0.4
+
+* Add backdrop builder and dismissOnTapOutside to context menu
+
 ## 0.0.3
 
 * Add long press trigger mode
