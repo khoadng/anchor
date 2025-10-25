@@ -35,8 +35,7 @@ class VirtualReferenceData {
           appliedOffset == other.appliedOffset;
 
   @override
-  int get hashCode =>
-      Object.hash(virtualPosition, virtualSize, appliedOffset);
+  int get hashCode => Object.hash(virtualPosition, virtualSize, appliedOffset);
 
   @override
   String toString() =>

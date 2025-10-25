@@ -37,7 +37,8 @@ class AutoPlacementData {
 /// A middleware that automatically chooses the best placement
 /// based on available space.
 @immutable
-class AutoPlacementMiddleware implements PositioningMiddleware<AutoPlacementData> {
+class AutoPlacementMiddleware
+    implements PositioningMiddleware<AutoPlacementData> {
   /// Creates an [AutoPlacementMiddleware].
   const AutoPlacementMiddleware({
     this.allowedPlacements = const [
