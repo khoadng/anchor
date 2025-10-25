@@ -40,5 +40,30 @@ void main() {
       expect(arrowInfo.direction, AxisDirection.right);
       expect(arrowInfo.alignment, kArrowAlignmentStart);
     });
+
+    test('uses FlipData metadata for direction when available', () {
+      const points = AnchorPoints(
+        childAnchor: Alignment.bottomCenter,
+        overlayAnchor: Alignment.topCenter,
+      );
+
+      // Overlay was originally supposed to be above (up) but was flipped below (down)
+      const flipData = FlipData(
+        wasFlipped: true,
+        finalDirection:
+            AxisDirection.down, // Overlay is positioned below anchor
+      );
+
+      final metadata = const PositionMetadata().withData(flipData);
+
+      final arrowInfo = ArrowInfo.fromPoints(
+        points: points,
+        metadata: metadata,
+      );
+
+      // Arrow should point up (opposite of finalDirection) toward the anchor
+      expect(arrowInfo.direction, AxisDirection.up);
+      expect(arrowInfo.alignment, kArrowAlignmentCenter);
+    });
   });
 }

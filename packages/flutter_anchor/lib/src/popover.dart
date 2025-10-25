@@ -26,7 +26,6 @@ class AnchorPopover extends StatelessWidget {
     this.borderRadius,
     this.arrowShape,
     this.arrowSize,
-    this.arrowAlignment,
     this.placement,
     this.enableFlip,
     this.enableShift,
@@ -106,9 +105,6 @@ class AnchorPopover extends StatelessWidget {
   /// The size of the arrow for the popover overlay.
   final Size? arrowSize;
 
-  /// The alignment of the arrow for the popover overlay.
-  final double? arrowAlignment;
-
   /// The box shadow(s) for the popover overlay.
   final List<BoxShadow>? boxShadow;
 
@@ -146,13 +142,8 @@ class AnchorPopover extends StatelessWidget {
               borderRadius: borderRadius,
               arrowShape: arrowShape,
               arrowSize: arrowSize,
-              arrowAlignment: arrowAlignment,
               boxShadow: boxShadow,
               border: border,
-
-              /// Maybe later allow overriding arrow direction
-              // ignore: avoid_redundant_argument_values
-              arrowDirection: null,
               child: overlayBuilder(context),
             );
           },
@@ -169,8 +160,6 @@ class _AnchorWithArrow extends StatelessWidget {
     this.backgroundColor,
     this.borderRadius,
     this.arrowShape,
-    this.arrowDirection,
-    this.arrowAlignment,
     this.arrowSize,
     this.border,
     this.boxShadow,
@@ -188,12 +177,6 @@ class _AnchorWithArrow extends StatelessWidget {
   /// The shape of the arrow.
   final ArrowShape? arrowShape;
 
-  /// Overrides the automatic arrow direction.
-  final AxisDirection? arrowDirection;
-
-  /// The position of the arrow along the overlay's edge (0.0 to 1.0).
-  final double? arrowAlignment;
-
   /// The size of the arrow
   final Size? arrowSize;
 
@@ -209,7 +192,8 @@ class _AnchorWithArrow extends StatelessWidget {
     final controller = anchorData.controller;
     final points = controller.points;
     final offset = points.offset;
-
+    final metadata = anchorData.metadata;
+    final geometry = anchorData.geometry;
     final effectiveArrowShape = arrowShape ?? const SharpArrow();
     final effectiveArrowSize = arrowSize ?? const Size(20, 10);
     final effectiveBorderRadius =
@@ -218,8 +202,8 @@ class _AnchorWithArrow extends StatelessWidget {
 
     final arrowInfo = ArrowInfo.fromPoints(
       points: points,
-      userArrowDirection: arrowDirection,
-      userArrowAlignment: arrowAlignment,
+      metadata: metadata,
+      geometry: geometry,
     );
 
     final effectiveBackgroundColor =

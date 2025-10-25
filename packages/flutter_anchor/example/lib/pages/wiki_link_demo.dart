@@ -223,7 +223,6 @@ class _WikiLinkState extends State<_WikiLink> {
           : const AnchorTriggerMode.longPress(),
       placement: Placement.topStart,
       backgroundColor: const Color(0xFF1E293B),
-      arrowAlignment: 0.05,
       arrowSize: const Size(20, 10),
       borderRadius: BorderRadius.circular(8),
       overlayBuilder: (context) => _WikiPreviewCardContent(

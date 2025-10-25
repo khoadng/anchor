@@ -138,7 +138,6 @@ class AnchorTooltip extends StatelessWidget {
         backgroundColor: backgroundColor,
         borderRadius: borderRadius,
         arrowSize: arrowSize,
-        arrowAlignment: arrowAlignment,
         arrowShape: arrowShape,
         placement: placement,
         enableFlip: enableFlip,

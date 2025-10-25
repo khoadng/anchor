@@ -1,6 +1,8 @@
 import 'package:anchor/anchor.dart';
 import 'package:flutter/widgets.dart';
 
+import '../core/geometry.dart';
+
 /// Constant for aligning the arrow to the start of the overlay edge.
 const kArrowAlignmentStart = 0.1;
 
@@ -20,48 +22,35 @@ class ArrowInfo {
     required this.alignment,
   });
 
-  /// Calculates the arrow direction and alignment based on anchor points.
-  ///
-  /// If [userArrowDirection] is provided, it will be used and [userArrowAlignment]
-  /// defaults to center if not provided.
-  ///
-  /// If [userArrowDirection] is null, the direction is automatically determined
-  /// from the [points], and alignment is calculated based on the cross-axis
-  /// position unless [userArrowAlignment] is provided.
-  ///
-  /// When [userArrowAlignment] is provided, the value represents the position
-  /// along the child element's edge (0.0 = start, 0.5 = center, 1.0 = end).
-  /// The arrow will automatically adjust to point to the same relative position
-  /// on the child, regardless of which side the overlay appears on due to
-  /// screen constraints.
+  /// Calculates the arrow direction and alignment based on anchor points and geometry.
   factory ArrowInfo.fromPoints({
     required AnchorPoints points,
-    AxisDirection? userArrowDirection,
-    double? userArrowAlignment,
+    PositionMetadata? metadata,
+    AnchorGeometry? geometry,
   }) {
-    if (userArrowDirection != null) {
-      return ArrowInfo(
-        direction: userArrowDirection,
-        alignment: userArrowAlignment ?? kArrowAlignmentCenter,
-      );
-    }
-
-    final direction = switch (points) {
-      AnchorPoints(isLeft: true) => AxisDirection.right,
-      AnchorPoints(isRight: true) => AxisDirection.left,
-      AnchorPoints(isBelow: true) => AxisDirection.up,
-      _ => AxisDirection.down, // isAbove
-    };
-
-    final alignment = switch (userArrowAlignment) {
-      final double value when !points.isCrossAxisFlipped => value,
-      final double value => 1.0 - value,
-      null => _calculateAutoAlignment(points: points, direction: direction),
+    // Determine arrow direction
+    final flipData = metadata?.get<FlipData>();
+    final direction = switch (flipData?.finalDirection) {
+      // If we have flip data, use the opposite direction
+      AxisDirection.up => AxisDirection.down,
+      AxisDirection.down => AxisDirection.up,
+      AxisDirection.left => AxisDirection.right,
+      AxisDirection.right => AxisDirection.left,
+      null => switch (points) {
+          AnchorPoints(isLeft: true) => AxisDirection.right,
+          AnchorPoints(isRight: true) => AxisDirection.left,
+          AnchorPoints(isBelow: true) => AxisDirection.up,
+          _ => AxisDirection.down,
+        },
     };
 
     return ArrowInfo(
       direction: direction,
-      alignment: alignment,
+      alignment: _calculateAutoAlignment(
+        points: points,
+        direction: direction,
+        geometry: geometry,
+      ),
     );
   }
 
@@ -71,19 +60,45 @@ class ArrowInfo {
   /// The position of the arrow along the overlay's edge (0.0 to 1.0).
   final double alignment;
 
-  /// Calculates automatic arrow alignment based on cross-axis positioning.
+  /// Calculates automatic arrow alignment based on child position.
+  ///
+  /// Falls back to using anchor points if geometry is not available.
   static double _calculateAutoAlignment({
     required AnchorPoints points,
     required AxisDirection direction,
+    AnchorGeometry? geometry,
   }) {
+    final childBounds = geometry?.childBounds;
+    final overlayBounds = geometry?.overlayBounds;
+    if (childBounds != null && overlayBounds != null) {
+      final childCenter = childBounds.center;
+
+      final relativePosition = switch (direction) {
+        AxisDirection.up ||
+        AxisDirection.down =>
+          (childCenter.dx - overlayBounds.left) / overlayBounds.width,
+        AxisDirection.left ||
+        AxisDirection.right =>
+          (childCenter.dy - overlayBounds.top) / overlayBounds.height,
+      };
+
+      final clamped = relativePosition.clamp(0.0, 1.0);
+      return switch (clamped) {
+        < 0.3 => kArrowAlignmentStart,
+        > 0.7 => kArrowAlignmentEnd,
+        _ => kArrowAlignmentCenter,
+      };
+    }
+
+    // Fallback: use anchor points cross-axis value
     final crossAxisValue = switch (direction) {
       AxisDirection.left || AxisDirection.right => points.overlayAnchor.y,
       AxisDirection.up || AxisDirection.down => points.overlayAnchor.x,
     };
 
     return switch (crossAxisValue) {
-      <= -0.5 => kArrowAlignmentStart,
-      >= 0.5 => kArrowAlignmentEnd,
+      < -0.3 => kArrowAlignmentStart,
+      > 0.3 => kArrowAlignmentEnd,
       _ => kArrowAlignmentCenter,
     };
   }

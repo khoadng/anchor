@@ -10,7 +10,6 @@ class AnchorPoints {
     required this.childAnchor,
     required this.overlayAnchor,
     Alignment? overlayAlignment,
-    this.isCrossAxisFlipped = false,
     this.offset = Offset.zero,
   }) : overlayAlignment = overlayAlignment ?? overlayAnchor;
 
@@ -42,14 +41,12 @@ class AnchorPoints {
     Alignment? childAnchor,
     Alignment? overlayAnchor,
     Alignment? overlayAlignment,
-    bool? isCrossAxisFlipped,
     Offset? offset,
   }) {
     return AnchorPoints(
       childAnchor: childAnchor ?? this.childAnchor,
       overlayAnchor: overlayAnchor ?? this.overlayAnchor,
       overlayAlignment: overlayAlignment ?? this.overlayAlignment,
-      isCrossAxisFlipped: isCrossAxisFlipped ?? this.isCrossAxisFlipped,
       offset: offset ?? this.offset,
     );
   }
@@ -64,10 +61,6 @@ class AnchorPoints {
   /// handle overflow.
   final Alignment overlayAlignment;
 
-  /// Whether the cross-axis alignment was flipped from its preferred direction
-  /// to prevent overflow.
-  final bool isCrossAxisFlipped;
-
   /// The pixel offset to apply to the overlay position.
   final Offset offset;
 
@@ -78,7 +71,6 @@ class AnchorPoints {
         other.childAnchor == childAnchor &&
         other.overlayAnchor == overlayAnchor &&
         other.overlayAlignment == overlayAlignment &&
-        other.isCrossAxisFlipped == isCrossAxisFlipped &&
         other.offset == offset;
   }
 
@@ -87,7 +79,6 @@ class AnchorPoints {
         childAnchor,
         overlayAnchor,
         overlayAlignment,
-        isCrossAxisFlipped,
         offset,
       );
 
