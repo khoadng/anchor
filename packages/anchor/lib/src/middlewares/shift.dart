@@ -5,6 +5,32 @@ import '../placement.dart';
 import '../position.dart';
 import '../types.dart';
 
+/// Data produced by [ShiftMiddleware] after positioning.
+@immutable
+class ShiftData {
+  /// Creates [ShiftData].
+  const ShiftData({required this.shift});
+
+  /// The shift offset applied to prevent overflow.
+  ///
+  /// For vertical placements (top/bottom), this is the horizontal shift.
+  /// For horizontal placements (left/right), this is the vertical shift.
+  final Offset shift;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ShiftData &&
+          runtimeType == other.runtimeType &&
+          shift == other.shift;
+
+  @override
+  int get hashCode => shift.hashCode;
+
+  @override
+  String toString() => 'ShiftData(shift: $shift)';
+}
+
 /// A middleware that adjusts the overlay's alignment along
 /// the cross-axis to prevent it from overflowing the viewport.
 ///
@@ -12,7 +38,7 @@ import '../types.dart';
 /// might be "shifted" to the left or right if it's too close to the
 /// edge of the screen.
 @immutable
-class ShiftMiddleware implements PositioningMiddleware {
+class ShiftMiddleware implements PositioningMiddleware<ShiftData> {
   /// Creates a [ShiftMiddleware].
   const ShiftMiddleware({
     required this.preferredDirection,
@@ -33,8 +59,9 @@ class ShiftMiddleware implements PositioningMiddleware {
   int get hashCode => preferredDirection.hashCode;
 
   @override
-  PositionState run(PositionState state) {
+  (PositionState, ShiftData?) run(PositionState state) {
     final config = state.config;
+    final originalOffset = state.anchorPoints.offset;
 
     final anchors = switch (preferredDirection) {
       // Vertical placements (above/below) → shift horizontally (cross-axis)
@@ -64,7 +91,10 @@ class ShiftMiddleware implements PositioningMiddleware {
         },
     };
 
-    return state.copyWith(anchorPoints: anchors);
+    final newState = state.copyWith(anchorPoints: anchors);
+    final appliedShift = anchors.offset - originalOffset;
+
+    return (newState, ShiftData(shift: appliedShift));
   }
 
   static AnchorPoints _adjustForOverflow({

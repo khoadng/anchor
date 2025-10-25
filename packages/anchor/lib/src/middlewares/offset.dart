@@ -4,9 +4,46 @@ import 'package:meta/meta.dart';
 
 import '../position.dart';
 
+/// Data produced by [OffsetMiddleware] after positioning.
+@immutable
+class OffsetData {
+  /// Creates [OffsetData].
+  const OffsetData({
+    required this.mainAxisOffset,
+    required this.crossAxisOffset,
+    required this.appliedOffset,
+  });
+
+  /// The main axis offset value that was requested.
+  final double mainAxisOffset;
+
+  /// The cross axis offset value that was requested.
+  final double crossAxisOffset;
+
+  /// The actual offset that was applied to the overlay.
+  final Offset appliedOffset;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is OffsetData &&
+          runtimeType == other.runtimeType &&
+          mainAxisOffset == other.mainAxisOffset &&
+          crossAxisOffset == other.crossAxisOffset &&
+          appliedOffset == other.appliedOffset;
+
+  @override
+  int get hashCode =>
+      Object.hash(mainAxisOffset, crossAxisOffset, appliedOffset);
+
+  @override
+  String toString() =>
+      'OffsetData(mainAxis: $mainAxisOffset, crossAxis: $crossAxisOffset, applied: $appliedOffset)';
+}
+
 /// A middleware that applies a positional offset to the overlay.
 @immutable
-class OffsetMiddleware implements PositioningMiddleware {
+class OffsetMiddleware implements PositioningMiddleware<OffsetData> {
   /// Creates an [OffsetMiddleware].
   const OffsetMiddleware({
     this.mainAxis = 0.0,
@@ -38,7 +75,7 @@ class OffsetMiddleware implements PositioningMiddleware {
       'OffsetMiddleware(mainAxis: $mainAxis, crossAxis: $crossAxis)';
 
   @override
-  PositionState run(PositionState state) {
+  (PositionState, OffsetData?) run(PositionState state) {
     final points = state.anchorPoints;
 
     final newOffset = switch (points) {
@@ -53,6 +90,15 @@ class OffsetMiddleware implements PositioningMiddleware {
       offset: points.offset + newOffset,
     );
 
-    return state.copyWith(anchorPoints: updatedPoints);
+    final newState = state.copyWith(anchorPoints: updatedPoints);
+
+    return (
+      newState,
+      OffsetData(
+        mainAxisOffset: mainAxis,
+        crossAxisOffset: crossAxis,
+        appliedOffset: newOffset,
+      ),
+    );
   }
 }

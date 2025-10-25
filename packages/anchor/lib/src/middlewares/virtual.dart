@@ -5,6 +5,44 @@ import '../position.dart';
 import '../types.dart';
 import '../virtual_reference.dart';
 
+/// Data produced by [VirtualReferenceMiddleware] after positioning.
+@immutable
+class VirtualReferenceData {
+  /// Creates [VirtualReferenceData].
+  const VirtualReferenceData({
+    required this.virtualPosition,
+    required this.virtualSize,
+    required this.appliedOffset,
+  });
+
+  /// The position of the virtual reference point.
+  final Offset virtualPosition;
+
+  /// The size of the virtual reference (0x0 for point references).
+  final Size virtualSize;
+
+  /// The offset that was applied to move from the original child position
+  /// to the virtual reference position.
+  final Offset appliedOffset;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VirtualReferenceData &&
+          runtimeType == other.runtimeType &&
+          virtualPosition == other.virtualPosition &&
+          virtualSize == other.virtualSize &&
+          appliedOffset == other.appliedOffset;
+
+  @override
+  int get hashCode =>
+      Object.hash(virtualPosition, virtualSize, appliedOffset);
+
+  @override
+  String toString() =>
+      'VirtualReferenceData(position: $virtualPosition, size: $virtualSize, offset: $appliedOffset)';
+}
+
 /// A middleware that positions the overlay at an absolute
 /// position using a [VirtualReference].
 ///
@@ -12,7 +50,8 @@ import '../virtual_reference.dart';
 /// overlay that should appear at an arbitrary location rather than anchored
 /// to a physical widget.
 @immutable
-class VirtualReferenceMiddleware implements PositioningMiddleware {
+class VirtualReferenceMiddleware
+    implements PositioningMiddleware<VirtualReferenceData> {
   /// Creates a [VirtualReferenceMiddleware].
   const VirtualReferenceMiddleware(this.reference);
 
@@ -33,7 +72,7 @@ class VirtualReferenceMiddleware implements PositioningMiddleware {
   String toString() => 'VirtualReferenceMiddleware($reference)';
 
   @override
-  PositionState run(PositionState state) {
+  (PositionState, VirtualReferenceData?) run(PositionState state) {
     final rect = reference.getBoundingRect();
     final config = state.config;
 
@@ -66,9 +105,18 @@ class VirtualReferenceMiddleware implements PositioningMiddleware {
       offset: virtualOffset,
     );
 
-    return state.copyWith(
+    final newState = state.copyWith(
       config: virtualConfig,
       anchorPoints: updatedPoints,
+    );
+
+    return (
+      newState,
+      VirtualReferenceData(
+        virtualPosition: Offset(rect.left, rect.top),
+        virtualSize: Size(rect.width, rect.height),
+        appliedOffset: virtualOffset,
+      ),
     );
   }
 }

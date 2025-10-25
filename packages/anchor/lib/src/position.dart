@@ -196,18 +196,115 @@ class PositionState {
   }
 }
 
+/// Holds metadata produced by middleware during positioning.
+///
+/// This allows middleware to expose additional information (like whether
+/// a flip occurred, shift amounts, arrow positions, etc.) without cluttering
+/// the core [PositionState].
+@immutable
+class PositionMetadata {
+  /// Creates a [PositionMetadata] with the given data map.
+  const PositionMetadata([this._data = const {}]);
+
+  final Map<Type, Object?> _data;
+
+  /// Gets middleware data by type.
+  ///
+  /// Returns `null` if no data of type [T] was produced by any middleware.
+  ///
+  /// Example:
+  /// ```dart
+  /// final flipData = metadata.get<FlipData>();
+  /// if (flipData?.wasFlipped == true) {
+  ///   // Handle flipped case
+  /// }
+  /// ```
+  T? get<T>() => _data[T] as T?;
+
+  /// Creates a new [PositionMetadata] with additional data.
+  PositionMetadata withData<T>(T value) {
+    return PositionMetadata({..._data, T: value});
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PositionMetadata &&
+          runtimeType == other.runtimeType &&
+          _mapsEqual(_data, other._data);
+
+  @override
+  int get hashCode => Object.hashAll(_data.entries);
+
+  static bool _mapsEqual(Map<Type, Object?> a, Map<Type, Object?> b) {
+    if (a.length != b.length) return false;
+    for (final key in a.keys) {
+      if (a[key] != b[key]) return false;
+    }
+    return true;
+  }
+}
+
+/// The result of running the positioning pipeline.
+///
+/// Contains both the final positioning state and metadata produced by
+/// middleware during the positioning calculation.
+@immutable
+class PositionResult {
+  /// Creates a [PositionResult].
+  const PositionResult({
+    required this.state,
+    required this.metadata,
+  });
+
+  /// The final position state after all middleware have run.
+  final PositionState state;
+
+  /// Metadata produced by middleware during positioning.
+  final PositionMetadata metadata;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PositionResult &&
+          runtimeType == other.runtimeType &&
+          state == other.state &&
+          metadata == other.metadata;
+
+  @override
+  int get hashCode => Object.hash(state, metadata);
+}
+
 /// The interface for a positioning middleware.
 ///
 /// Middleware are functions that run sequentially to compute the final
-/// position of the overlay. They can modify the [PositionState] which
-/// contains both the anchor points and the positioning configuration.
-abstract interface class PositioningMiddleware {
+/// position of the overlay. They can modify the [PositionState] and
+/// optionally produce metadata of type [T].
+///
+/// The generic type [T] declares what kind of data this middleware produces.
+/// Use `void` if the middleware doesn't produce any metadata.
+///
+/// Example:
+/// ```dart
+/// class FlipMiddleware implements PositioningMiddleware<FlipData> {
+///   @override
+///   (PositionState, FlipData?) run(PositionState state) {
+///     // ... flip logic
+///     return (newState, FlipData(wasFlipped: true));
+///   }
+/// }
+/// ```
+abstract interface class PositioningMiddleware<T> {
   /// Runs the middleware logic.
   ///
   /// Takes the [state] from the previous middleware (or the initial state)
-  /// and returns a new, modified [PositionState]. Middleware can modify
-  /// both the anchor points and the config (e.g., for virtual references).
-  PositionState run(PositionState state);
+  /// and returns a tuple of:
+  /// - The new [PositionState] (potentially modified)
+  /// - Optional metadata of type [T] (or `null` if no data to report)
+  ///
+  /// Middleware can modify both the anchor points and the config
+  /// (e.g., for virtual references).
+  (PositionState, T?) run(PositionState state);
 }
 
 /// Orchestrates the entire positioning calculation.
@@ -219,16 +316,30 @@ class PositioningPipeline {
   final List<PositioningMiddleware> middlewares;
 
   /// Runs the positioning pipeline.
-  PositionState run({
+  ///
+  /// Returns a [PositionResult] containing both the final position state
+  /// and metadata produced by all middleware.
+  PositionResult run({
     required Placement placement,
     required PositioningConfig config,
   }) {
     var state = PositionState.fromPlacement(placement, config);
+    final allData = <Type, Object?>{};
 
     for (final middleware in middlewares) {
-      state = middleware.run(state);
+      final (newState, data) = middleware.run(state);
+
+      // Collect data by its runtime type
+      if (data != null) {
+        allData[data.runtimeType] = data;
+      }
+
+      state = newState;
     }
 
-    return state;
+    return PositionResult(
+      state: state,
+      metadata: PositionMetadata(allData),
+    );
   }
 }

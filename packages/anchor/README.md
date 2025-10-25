@@ -53,12 +53,12 @@ final pipeline = PositioningPipeline(
 
 // 3. Run the calculation
 // Start by trying to place the overlay on top
-final finalState = pipeline.run(
+final result = pipeline.run(
   placement: Placement.top,
   config: config,
 );
 
 // 4. Use the results
 // finalState.anchorPoints contains the final computed anchors and offset.
-print(finalState.anchorPoints.offset);
+print(result.state.anchorPoints.offset);
 ```

@@ -24,7 +24,7 @@ void main() {
         defaultConfig,
       );
 
-      final state = middleware.run(initialState);
+      final (state, _) = middleware.run(initialState);
 
       // For `top` placement, mainAxis is vertical.
       // -10 moves it "away" from the child (upwards).
@@ -42,7 +42,7 @@ void main() {
       );
       final initialState = PositionState.fromPlacement(Placement.top, config);
 
-      final state = middleware.run(initialState);
+      final (state, _) = middleware.run(initialState);
 
       // It should flip from 'up' (isAbove) to 'down' (isBelow)
       expect(state.anchorPoints.isAbove, isFalse);
@@ -68,7 +68,7 @@ void main() {
       // Overlay ends at 715 + 100 = 815
       // Viewport ends at 800. Overflow = 15.
       // Shift should be -15.
-      final state = middleware.run(initialState);
+      final (state, _) = middleware.run(initialState);
 
       expect(state.anchorPoints.offset, const Offset(-15, 0));
     });
@@ -85,7 +85,7 @@ void main() {
       // Spaces: above: 20, below: 530, left: 375
       final initialState = PositionState.fromPlacement(Placement.top, config);
 
-      final state = middleware.run(initialState);
+      final (state, _) = middleware.run(initialState);
 
       // It should choose 'bottom' as it has the most space (530px)
       expect(state.anchorPoints.isBelow, isTrue);
@@ -103,7 +103,7 @@ void main() {
         defaultConfig,
       );
 
-      final state = middleware.run(initialState);
+      final (state, _) = middleware.run(initialState);
 
       // 1. Check if the offset was calculated correctly to move the overlay
       // from the child's position (375, 275) to the virtual point (50, 60).
@@ -144,67 +144,67 @@ void main() {
       final cornerConfig = config.copyWith(
         childPosition: const Offset(10, 10),
       );
-      final state = pipeline.run(
+      final result = pipeline.run(
         placement: Placement.top,
         config: cornerConfig,
       );
 
       // 1. Flips: 'top' (10px) is not enough space, so it flips 'down'.
-      expect(state.anchorPoints.isBelow, isTrue);
+      expect(result.state.anchorPoints.isBelow, isTrue);
       // 2. Shifts: 'top' placement tries to center.
       //    Child center-x = 15. Overlay center-x = 50.
       //    Overlay start-x = 15 - 50 = -35.
       //    Overflows left by 35. Shifts right by 35.
-      expect(state.anchorPoints.offset.dx, 35);
+      expect(result.state.anchorPoints.offset.dx, 35);
     });
 
     test('top-right corner', () {
       final cornerConfig = config.copyWith(
         childPosition: const Offset(780, 10), // 800 - 10 - 10
       );
-      final state = pipeline.run(
+      final result = pipeline.run(
         placement: Placement.top,
         config: cornerConfig,
       );
 
       // 1. Flips: 'top' (10px) is not enough space, so it flips 'down'.
-      expect(state.anchorPoints.isBelow, isTrue);
+      expect(result.state.anchorPoints.isBelow, isTrue);
       // 2. Shifts: 'top' placement tries to center.
       //    Child center-x = 785. Overlay center-x = 50.
       //    Overlay start-x = 785 - 50 = 735.
       //    Overlay end-x = 735 + 100 = 835.
       //    Overflows right by 35. Shifts left by -35.
-      expect(state.anchorPoints.offset.dx, -35);
+      expect(result.state.anchorPoints.offset.dx, -35);
     });
 
     test('bottom-left corner', () {
       final cornerConfig = config.copyWith(
         childPosition: const Offset(10, 580), // 600 - 10 - 10
       );
-      final state = pipeline.run(
+      final result = pipeline.run(
         placement: Placement.top,
         config: cornerConfig,
       );
 
       // 1. Flips: 'top' (580px) has enough space, so it stays 'top'.
-      expect(state.anchorPoints.isAbove, isTrue);
+      expect(result.state.anchorPoints.isAbove, isTrue);
       // 2. Shifts: Same as top-left case. Shifts right by 35.
-      expect(state.anchorPoints.offset.dx, 35);
+      expect(result.state.anchorPoints.offset.dx, 35);
     });
 
     test('bottom-right corner', () {
       final cornerConfig = config.copyWith(
         childPosition: const Offset(780, 580),
       );
-      final state = pipeline.run(
+      final result = pipeline.run(
         placement: Placement.top,
         config: cornerConfig,
       );
 
       // 1. Flips: 'top' (580px) has enough space, so it stays 'top'.
-      expect(state.anchorPoints.isAbove, isTrue);
+      expect(result.state.anchorPoints.isAbove, isTrue);
       // 2. Shifts: Same as top-right case. Shifts left by -35.
-      expect(state.anchorPoints.offset.dx, -35);
+      expect(result.state.anchorPoints.offset.dx, -35);
     });
   });
 }

@@ -3,10 +3,41 @@ import 'package:meta/meta.dart';
 import '../placement.dart';
 import '../position.dart';
 
+/// Data produced by [AutoPlacementMiddleware] after positioning.
+@immutable
+class AutoPlacementData {
+  /// Creates [AutoPlacementData].
+  const AutoPlacementData({
+    required this.chosenPlacement,
+    required this.availableSpace,
+  });
+
+  /// The placement that was automatically chosen.
+  final Placement chosenPlacement;
+
+  /// The available space in the chosen direction.
+  final double availableSpace;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AutoPlacementData &&
+          runtimeType == other.runtimeType &&
+          chosenPlacement == other.chosenPlacement &&
+          availableSpace == other.availableSpace;
+
+  @override
+  int get hashCode => Object.hash(chosenPlacement, availableSpace);
+
+  @override
+  String toString() =>
+      'AutoPlacementData(chosenPlacement: $chosenPlacement, availableSpace: $availableSpace)';
+}
+
 /// A middleware that automatically chooses the best placement
 /// based on available space.
 @immutable
-class AutoPlacementMiddleware implements PositioningMiddleware {
+class AutoPlacementMiddleware implements PositioningMiddleware<AutoPlacementData> {
   /// Creates an [AutoPlacementMiddleware].
   const AutoPlacementMiddleware({
     this.allowedPlacements = const [
@@ -38,7 +69,7 @@ class AutoPlacementMiddleware implements PositioningMiddleware {
   int get hashCode => Object.hashAll(allowedPlacements);
 
   @override
-  PositionState run(PositionState state) {
+  (PositionState, AutoPlacementData?) run(PositionState state) {
     final config = state.config;
     final spaces = config.spaces;
 
@@ -61,11 +92,17 @@ class AutoPlacementMiddleware implements PositioningMiddleware {
     );
 
     return switch (bestPlacement) {
-      null => state,
-      final result => state.copyWith(
-          anchorPoints: result.placement.toAnchorPoints().copyWith(
-                offset: state.anchorPoints.offset,
-              ),
+      null => (state, null),
+      final result => (
+          state.copyWith(
+            anchorPoints: result.placement.toAnchorPoints().copyWith(
+                  offset: state.anchorPoints.offset,
+                ),
+          ),
+          AutoPlacementData(
+            chosenPlacement: result.placement,
+            availableSpace: result.space,
+          ),
         ),
     };
   }

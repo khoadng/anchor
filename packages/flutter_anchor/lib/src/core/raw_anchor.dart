@@ -288,14 +288,14 @@ class _RawAnchorState extends State<RawAnchor>
     );
 
     final middlewares = _lastMiddlewares ?? AnchorMiddlewares.of(context);
-    final finalState = PositioningPipeline(
+    final result = PositioningPipeline(
       middlewares: middlewares,
     ).run(
       placement: widget.placement,
       config: config,
     );
 
-    var newPoints = finalState.anchorPoints;
+    var newPoints = result.state.anchorPoints;
 
     if (widget.offset case final offset?) {
       newPoints = newPoints.copyWith(
