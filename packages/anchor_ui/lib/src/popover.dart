@@ -20,8 +20,6 @@ class AnchorPopover extends StatelessWidget {
     this.arrowShape,
     this.arrowSize,
     this.placement,
-    this.enableFlip,
-    this.enableShift,
     this.scrollBehavior,
     this.transitionDuration,
     this.transitionBuilder,
@@ -61,12 +59,6 @@ class AnchorPopover extends StatelessWidget {
 
   /// {@macro anchor_placement}
   final Placement? placement;
-
-  /// {@macro anchor_enable_flip}
-  final bool? enableFlip;
-
-  /// {@macro anchor_enable_shift}
-  final bool? enableShift;
 
   /// {@macro anchor_scroll_behavior}
   final AnchorScrollBehavior? scrollBehavior;
@@ -120,8 +112,6 @@ class AnchorPopover extends StatelessWidget {
         overlayWidth: overlayWidth,
         triggerMode: triggerMode,
         placement: placement,
-        enableFlip: enableFlip,
-        enableShift: enableShift,
         scrollBehavior: scrollBehavior,
         transitionDuration: transitionDuration,
         transitionBuilder: transitionBuilder,
@@ -147,19 +137,15 @@ class AnchorPopover extends StatelessWidget {
 
   List<PositioningMiddleware> _buildMiddlewares() {
     final effectivePlacement = placement ?? Placement.top;
-    final effectEnableFlip = enableFlip ?? true;
-    final effectiveEnableShift = enableShift ?? true;
     final effectiveSpacing = spacing ?? 4;
 
     return [
-      if (effectEnableFlip)
-        FlipMiddleware(
-          preferredDirection: effectivePlacement.direction,
-        ),
-      if (effectiveEnableShift)
-        ShiftMiddleware(
-          preferredDirection: effectivePlacement.direction,
-        ),
+      FlipMiddleware(
+        preferredDirection: effectivePlacement.direction,
+      ),
+      ShiftMiddleware(
+        preferredDirection: effectivePlacement.direction,
+      ),
       OffsetMiddleware(mainAxis: effectiveSpacing),
       ArrowMiddleware(
         arrowSize: arrowSize ?? const Size(20, 10),

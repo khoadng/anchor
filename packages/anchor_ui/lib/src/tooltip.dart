@@ -22,8 +22,6 @@ class AnchorTooltip extends StatelessWidget {
     this.arrowAlignment,
     this.arrowShape,
     this.placement,
-    this.enableFlip,
-    this.enableShift,
     this.scrollBehavior,
     this.transitionDuration,
     this.transitionBuilder,
@@ -76,12 +74,6 @@ class AnchorTooltip extends StatelessWidget {
 
   /// {@macro anchor_placement}
   final Placement? placement;
-
-  /// {@macro anchor_enable_flip}
-  final bool? enableFlip;
-
-  /// {@macro anchor_enable_shift}
-  final bool? enableShift;
 
   /// {@macro anchor_scroll_behavior}
   final AnchorScrollBehavior? scrollBehavior;
@@ -136,8 +128,6 @@ class AnchorTooltip extends StatelessWidget {
         arrowSize: arrowSize,
         arrowShape: arrowShape,
         placement: placement,
-        enableFlip: enableFlip,
-        enableShift: enableShift,
         scrollBehavior: scrollBehavior,
         transitionDuration: transitionDuration,
         transitionBuilder: transitionBuilder,
