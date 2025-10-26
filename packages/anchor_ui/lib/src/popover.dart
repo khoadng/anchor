@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_anchor/flutter_anchor.dart';
 
-import 'arrow/arrow_info.dart';
-import 'arrow/rendering/arrows.dart';
-import 'arrow/rendering/border.dart';
-
-const _defaultArrowSpacing = 8;
+import 'arrow/arrows.dart';
+import 'arrow/border.dart';
 
 /// Creates an anchor overlay styled as a popover.
 class AnchorPopover extends StatelessWidget {
@@ -112,41 +109,62 @@ class AnchorPopover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Anchor(
-      key: key,
-      controller: controller,
-      spacing: spacing,
-      offset: offset,
-      overlayHeight: overlayHeight,
-      overlayWidth: overlayWidth,
-      triggerMode: triggerMode,
-      placement: placement,
-      enableFlip: enableFlip,
-      enableShift: enableShift,
-      scrollBehavior: scrollBehavior,
-      transitionDuration: transitionDuration,
-      transitionBuilder: transitionBuilder,
-      backdropBuilder: backdropBuilder,
-      onShow: onShow,
-      onHide: onHide,
-      enabled: enabled,
-      overlayBuilder: (context) {
-        return Builder(
-          builder: (context) {
-            return _AnchorWithArrow(
-              backgroundColor: backgroundColor,
-              borderRadius: borderRadius,
-              arrowShape: arrowShape,
-              arrowSize: arrowSize,
-              boxShadow: boxShadow,
-              border: border,
-              child: overlayBuilder(context),
-            );
-          },
-        );
-      },
-      child: child,
+    return AnchorMiddlewares(
+      middlewares: _buildMiddlewares(),
+      child: Anchor(
+        key: key,
+        controller: controller,
+        spacing: spacing,
+        offset: offset,
+        overlayHeight: overlayHeight,
+        overlayWidth: overlayWidth,
+        triggerMode: triggerMode,
+        placement: placement,
+        enableFlip: enableFlip,
+        enableShift: enableShift,
+        scrollBehavior: scrollBehavior,
+        transitionDuration: transitionDuration,
+        transitionBuilder: transitionBuilder,
+        backdropBuilder: backdropBuilder,
+        onShow: onShow,
+        onHide: onHide,
+        enabled: enabled,
+        overlayBuilder: (context) {
+          return _AnchorWithArrow(
+            backgroundColor: backgroundColor,
+            borderRadius: borderRadius,
+            arrowShape: arrowShape,
+            arrowSize: arrowSize,
+            boxShadow: boxShadow,
+            border: border,
+            child: overlayBuilder(context),
+          );
+        },
+        child: child,
+      ),
     );
+  }
+
+  List<PositioningMiddleware> _buildMiddlewares() {
+    final effectivePlacement = placement ?? Placement.top;
+    final effectEnableFlip = enableFlip ?? true;
+    final effectiveEnableShift = enableShift ?? true;
+    final effectiveSpacing = spacing ?? 4;
+
+    return [
+      if (effectEnableFlip)
+        FlipMiddleware(
+          preferredDirection: effectivePlacement.direction,
+        ),
+      if (effectiveEnableShift)
+        ShiftMiddleware(
+          preferredDirection: effectivePlacement.direction,
+        ),
+      OffsetMiddleware(mainAxis: effectiveSpacing),
+      ArrowMiddleware(
+        arrowSize: arrowSize ?? const Size(20, 10),
+      ),
+    ];
   }
 }
 
@@ -187,73 +205,57 @@ class _AnchorWithArrow extends StatelessWidget {
     final anchorData = AnchorData.of(context);
     final controller = anchorData.controller;
     final points = controller.points;
-    final offset = points.offset;
     final metadata = anchorData.metadata;
-    final geometry = anchorData.geometry;
     final effectiveArrowShape = arrowShape ?? const SharpArrow();
     final effectiveArrowSize = arrowSize ?? const Size(20, 10);
     final effectiveBorderRadius =
         borderRadius ?? const BorderRadius.all(Radius.circular(8));
     final effectiveBorder = border ?? BorderSide.none;
 
-    final arrowInfo = ArrowInfo.fromPoints(
-      points: points,
-      metadata: metadata,
-      geometry: geometry,
-    );
+    final flipData = metadata.get<FlipData>();
+    final arrowData = metadata.get<ArrowData>();
+
+    final arrowDirection = switch (flipData?.finalDirection) {
+      AxisDirection.up => AxisDirection.down,
+      AxisDirection.down => AxisDirection.up,
+      AxisDirection.left => AxisDirection.right,
+      AxisDirection.right => AxisDirection.left,
+      null => switch (points) {
+          AnchorPoints(isLeft: true) => AxisDirection.right,
+          AnchorPoints(isRight: true) => AxisDirection.left,
+          AnchorPoints(isBelow: true) => AxisDirection.up,
+          _ => AxisDirection.down,
+        },
+    };
 
     final effectiveBackgroundColor =
         backgroundColor ?? Theme.of(context).colorScheme.surfaceContainer;
-
-    // Don't add margin for NoArrow shape
-    final hasArrow = effectiveArrowShape is! NoArrow;
-
-    // Calculate margin accounting for offset to prevent double spacing
-    double calculateMargin(AxisDirection direction) {
-      if (!hasArrow) return 0;
-
-      final offsetInDirection = switch (direction) {
-        AxisDirection.up => offset.dy.abs(),
-        AxisDirection.down => offset.dy.abs(),
-        AxisDirection.left => offset.dx.abs(),
-        AxisDirection.right => offset.dx.abs(),
-      };
-
-      // Margin = arrow height - offset component + some offset
-      return (effectiveArrowSize.height - offsetInDirection)
-              .clamp(0.0, double.infinity) +
-          _defaultArrowSpacing;
-    }
 
     return Container(
       decoration: ShapeDecoration(
         color: effectiveBackgroundColor,
         shape: AnchorShapeBorder(
           arrowShape: effectiveArrowShape,
-          arrowDirection: arrowInfo.direction,
-          arrowAlignment: arrowInfo.alignment,
+          arrowDirection: arrowDirection,
+          arrowData: arrowData,
           arrowSize: effectiveArrowSize,
           borderRadius: effectiveBorderRadius,
           border: effectiveBorder,
         ),
         shadows: boxShadow,
       ),
-      margin: hasArrow
-          ? EdgeInsets.only(
-              top: arrowInfo.direction == AxisDirection.up
-                  ? calculateMargin(AxisDirection.up)
-                  : 0,
-              bottom: arrowInfo.direction == AxisDirection.down
-                  ? calculateMargin(AxisDirection.down)
-                  : 0,
-              left: arrowInfo.direction == AxisDirection.left
-                  ? calculateMargin(AxisDirection.left)
-                  : 0,
-              right: arrowInfo.direction == AxisDirection.right
-                  ? calculateMargin(AxisDirection.right)
-                  : 0,
-            )
-          : EdgeInsets.zero,
+      margin: switch (effectiveArrowShape) {
+        NoArrow() => EdgeInsets.zero,
+        _ => switch (arrowDirection) {
+            AxisDirection.up => EdgeInsets.only(top: effectiveArrowSize.height),
+            AxisDirection.down =>
+              EdgeInsets.only(bottom: effectiveArrowSize.height),
+            AxisDirection.left =>
+              EdgeInsets.only(left: effectiveArrowSize.height),
+            AxisDirection.right =>
+              EdgeInsets.only(right: effectiveArrowSize.height),
+          },
+      },
       child: child,
     );
   }

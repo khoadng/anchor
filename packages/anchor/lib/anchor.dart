@@ -1,4 +1,5 @@
 export 'src/anchor_points.dart';
+export 'src/middlewares/arrow.dart';
 export 'src/middlewares/auto_placement.dart';
 export 'src/middlewares/flip.dart';
 export 'src/middlewares/offset.dart';

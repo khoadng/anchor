@@ -1,3 +1,7 @@
+## 0.0.3
+
+* Add arrow middleware
+
 ## 0.0.2
 
 * Add middleware metadata to positioning results

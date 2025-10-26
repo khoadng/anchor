@@ -274,23 +274,26 @@ class _AnchorState extends State<Anchor> {
     }
   }
 
-  List<PositioningMiddleware> _buildMiddlewares() {
+  List<PositioningMiddleware> _buildMiddlewares(BuildContext context) {
     final placement = widget.placement ?? Placement.top;
     final enableFlip = widget.enableFlip ?? true;
     final enableShift = widget.enableShift ?? true;
     final spacing = widget.spacing ?? 4;
 
-    return [
-      if (enableFlip)
-        FlipMiddleware(
-          preferredDirection: placement.direction,
-        ),
-      if (enableShift)
-        ShiftMiddleware(
-          preferredDirection: placement.direction,
-        ),
-      OffsetMiddleware(mainAxis: spacing),
-    ];
+    return switch (AnchorMiddlewares.maybeOf(context)) {
+      null => [
+          if (enableFlip)
+            FlipMiddleware(
+              preferredDirection: placement.direction,
+            ),
+          if (enableShift)
+            ShiftMiddleware(
+              preferredDirection: placement.direction,
+            ),
+          OffsetMiddleware(mainAxis: spacing),
+        ],
+      final middlewares => middlewares,
+    };
   }
 
   @override
@@ -314,7 +317,7 @@ class _AnchorState extends State<Anchor> {
     }
 
     return AnchorMiddlewares(
-      middlewares: _buildMiddlewares(),
+      middlewares: _buildMiddlewares(context),
       child: RawAnchor(
         controller: _controller,
         placement: widget.placement ?? Placement.top,

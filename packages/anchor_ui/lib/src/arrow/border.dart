@@ -1,4 +1,5 @@
 import 'package:flutter/rendering.dart';
+import 'package:flutter_anchor/flutter_anchor.dart';
 
 import 'arrows.dart';
 
@@ -9,7 +10,7 @@ class AnchorShapeBorder extends ShapeBorder {
   const AnchorShapeBorder({
     this.arrowShape = const SharpArrow(),
     required this.arrowDirection,
-    this.arrowAlignment,
+    this.arrowData,
     this.arrowSize = const Size(20, 10),
     this.borderRadius = BorderRadius.zero,
     this.border = BorderSide.none,
@@ -21,9 +22,10 @@ class AnchorShapeBorder extends ShapeBorder {
   /// The direction the arrow points.
   final AxisDirection arrowDirection;
 
-  /// The position of the arrow along the overlay edge, from 0.0 (start) to
-  /// 1.0 (end).
-  final double? arrowAlignment;
+  /// Precise arrow positioning data from [ArrowMiddleware].
+  ///
+  /// If null, the arrow will be centered on the edge.
+  final ArrowData? arrowData;
 
   /// The size of the arrow
   final Size arrowSize;
@@ -51,36 +53,30 @@ class AnchorShapeBorder extends ShapeBorder {
   Path _buildArrowPath(Rect rect, RRect rrect) {
     final path = Path();
 
-    // Calculate arrow position based on alignment (0.0 to 1.0)
     late final Offset arrowBaseStart;
     late final Offset arrowBaseEnd;
-    final arrowAlignment = this.arrowAlignment ?? 0.5;
     final arrowWidth = arrowSize.width;
     final arrowHeight = arrowSize.height;
 
     switch (arrowDirection) {
       case AxisDirection.up:
-        final usableWidth = rect.width - rrect.tlRadiusX - rrect.trRadiusX;
-        final centerX =
-            rect.left + rrect.tlRadiusX + (usableWidth * arrowAlignment);
+        final arrowX = arrowData?.x ?? (rect.width - arrowWidth) / 2;
+        final centerX = rect.left + arrowX + arrowWidth / 2;
         arrowBaseStart = Offset(centerX - arrowWidth / 2, rect.top);
         arrowBaseEnd = Offset(centerX + arrowWidth / 2, rect.top);
       case AxisDirection.down:
-        final usableWidth = rect.width - rrect.blRadiusX - rrect.brRadiusX;
-        final centerX =
-            rect.left + rrect.blRadiusX + (usableWidth * arrowAlignment);
+        final arrowX = arrowData?.x ?? (rect.width - arrowWidth) / 2;
+        final centerX = rect.left + arrowX + arrowWidth / 2;
         arrowBaseStart = Offset(centerX - arrowWidth / 2, rect.bottom);
         arrowBaseEnd = Offset(centerX + arrowWidth / 2, rect.bottom);
       case AxisDirection.left:
-        final usableHeight = rect.height - rrect.tlRadiusY - rrect.blRadiusY;
-        final centerY =
-            rect.top + rrect.tlRadiusY + (usableHeight * arrowAlignment);
+        final arrowY = arrowData?.y ?? (rect.height - arrowWidth) / 2;
+        final centerY = rect.top + arrowY + arrowWidth / 2;
         arrowBaseStart = Offset(rect.left, centerY - arrowWidth / 2);
         arrowBaseEnd = Offset(rect.left, centerY + arrowWidth / 2);
       case AxisDirection.right:
-        final usableHeight = rect.height - rrect.trRadiusY - rrect.brRadiusY;
-        final centerY =
-            rect.top + rrect.trRadiusY + (usableHeight * arrowAlignment);
+        final arrowY = arrowData?.y ?? (rect.height - arrowWidth) / 2;
+        final centerY = rect.top + arrowY + arrowWidth / 2;
         arrowBaseStart = Offset(rect.right, centerY - arrowWidth / 2);
         arrowBaseEnd = Offset(rect.right, centerY + arrowWidth / 2);
     }
@@ -193,7 +189,7 @@ class AnchorShapeBorder extends ShapeBorder {
     return AnchorShapeBorder(
       arrowShape: arrowShape,
       arrowDirection: arrowDirection,
-      arrowAlignment: arrowAlignment,
+      arrowData: arrowData,
       arrowSize: arrowSize * t,
       borderRadius: borderRadius * t,
       border: border.scale(t),
@@ -207,7 +203,7 @@ class AnchorShapeBorder extends ShapeBorder {
           runtimeType == other.runtimeType &&
           arrowShape == other.arrowShape &&
           arrowDirection == other.arrowDirection &&
-          arrowAlignment == other.arrowAlignment &&
+          arrowData == other.arrowData &&
           arrowSize == other.arrowSize &&
           borderRadius == other.borderRadius &&
           border == other.border;
@@ -217,7 +213,7 @@ class AnchorShapeBorder extends ShapeBorder {
         runtimeType,
         arrowShape,
         arrowDirection,
-        arrowAlignment,
+        arrowData,
         arrowSize,
         borderRadius,
         border,
