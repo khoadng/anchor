@@ -207,7 +207,6 @@ class _RawAnchorState extends State<RawAnchor> {
     // Recalculate if middlewares changed and overlay is showing
     if (middlewaresChanged && _overlayController.isShowing) {
       _lastMiddlewares = currentMiddlewares;
-      _measuredOverlaySize = null;
       _calculateAnchorPoints(notify: false);
     } else {
       _lastMiddlewares = currentMiddlewares;
