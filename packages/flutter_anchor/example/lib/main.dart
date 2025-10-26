@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'pages/chat_demo.dart';
-import 'pages/context_menu_demo.dart';
 import 'pages/grid_demo.dart';
 import 'pages/macos_desktop_demo.dart';
+import 'pages/mailbox_demo.dart';
 import 'pages/search_demo.dart';
 import 'pages/wiki_link_demo.dart';
 import 'widgets/demo_card.dart';
@@ -86,8 +86,8 @@ class HomePage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           DemoCard(
-            title: 'Context Menu',
-            description: 'Right-click or long-press for a virtual menu',
+            title: 'Mailbox Context Menus',
+            description: 'Right-click context menus in a mailbox UI',
             icon: Icons.mouse,
             onTap: () => Navigator.push(
               context,

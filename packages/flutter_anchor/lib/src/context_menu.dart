@@ -26,6 +26,8 @@ class AnchorContextMenuController extends ChangeNotifier {
   VirtualReference? _reference;
   AnchorController? _anchor;
   var _enabled = true;
+  AnchorContextMenuController? _parent;
+  var _childHandlingEvent = false;
   VirtualReference? get _internalReference => _reference;
 
   /// Retrieves the [AnchorContextMenuController] from the closest [AnchorContextMenu] ancestor.
@@ -69,6 +71,16 @@ class AnchorContextMenuController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _attachParent(AnchorContextMenuController? parent) {
+    _parent = parent;
+  }
+
+  void _notifyChildHandling() {
+    _childHandlingEvent = true;
+    // Recursively notify all ancestors up the chain
+    _parent?._notifyChildHandling();
+  }
+
   void _handleAnchorChange() {
     if (!isShowing) {
       _reference = null;
@@ -79,6 +91,15 @@ class AnchorContextMenuController extends ChangeNotifier {
   /// Shows the menu at the specified position.
   void show(Offset position) {
     if (!_enabled) return;
+
+    // If a child is handling this event, don't show parent menu
+    if (_childHandlingEvent) {
+      _childHandlingEvent = false; // Reset for next event
+      return;
+    }
+
+    _parent?._notifyChildHandling();
+
     final reference = VirtualReference.fromPoint(position);
     _reference = reference;
     _anchor?.show();
@@ -189,6 +210,15 @@ class _AnchorContextMenuState extends State<AnchorContextMenu> {
     _controller = widget.controller ?? AnchorContextMenuController();
     _controller._attach(_anchorController);
     _controller._updateEnabled(widget.enabled ?? true);
+
+    // Find parent context menu controller and establish parent-child relationship
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final parentState =
+            context.findAncestorStateOfType<_AnchorContextMenuState>();
+        _controller._attachParent(parentState?._controller);
+      }
+    });
   }
 
   @override
@@ -207,6 +237,7 @@ class _AnchorContextMenuState extends State<AnchorContextMenu> {
   @override
   void dispose() {
     _controller._detach();
+    _controller._attachParent(null);
     if (widget.controller == null) {
       _controller.dispose();
     }

@@ -250,7 +250,7 @@ This package can be used to build a wide variety of common UI patterns.
 | **Chat Reactions** | Show an emoji reaction bar on hover, just like in MS Teams or Slack.     |
 | **Desktop UI** | Build macOS-style menu bars (manual click) and dock tooltips (hover).    |
 | **Grid Popovers** | Tap grid items to show a detailed popover with a beautiful blur backdrop. |
-| **Context Menus** | Gmail-style inbox with context menus on each email. |
+| **Mailbox Context Menus** | Gmail-style inbox with context menus on each email. |
 
 
 ## Contributing
