@@ -120,14 +120,18 @@ class AnchorPopover extends StatelessWidget {
         onHide: onHide,
         enabled: enabled,
         overlayBuilder: (context) {
-          return _AnchorWithArrow(
-            backgroundColor: backgroundColor,
-            borderRadius: borderRadius,
-            arrowShape: arrowShape,
-            arrowSize: arrowSize,
-            boxShadow: boxShadow,
-            border: border,
-            child: overlayBuilder(context),
+          return Builder(
+            builder: (context) {
+              return _AnchorWithArrow(
+                backgroundColor: backgroundColor,
+                borderRadius: borderRadius,
+                arrowShape: arrowShape,
+                arrowSize: arrowSize,
+                boxShadow: boxShadow,
+                border: border,
+                child: overlayBuilder(context),
+              );
+            },
           );
         },
         child: child,

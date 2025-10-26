@@ -1,6 +1,6 @@
 name: anchor
 description: An overlay positioning calculation package for Flutter, inspired by Floating UI.
-version: 0.0.3
+version: 0.0.4
 homepage: https://github.com/khoadng/anchor
 repository: https://github.com/khoadng/anchor
 issue_tracker: https://github.com/khoadng/anchor/issues

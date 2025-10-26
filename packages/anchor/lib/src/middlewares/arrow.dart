@@ -128,6 +128,9 @@ class ArrowMiddleware implements PositioningMiddleware<ArrowData> {
         padding: padding,
       );
 
+      // If arrow doesn't fit, don't render it
+      if (arrowX == null) return (state, null);
+
       return (
         state,
         ArrowData(
@@ -148,6 +151,9 @@ class ArrowMiddleware implements PositioningMiddleware<ArrowData> {
         arrowSize: arrowSize.height,
         padding: padding,
       );
+
+      // If arrow doesn't fit, don't render it
+      if (arrowY == null) return (state, null);
 
       return (
         state,
@@ -182,7 +188,7 @@ class ArrowMiddleware implements PositioningMiddleware<ArrowData> {
     return anchorPoint - overlayAnchorOffset + anchorPoints.offset;
   }
 
-  _ArrowCalculation _calculateArrowPosition({
+  _ArrowCalculation? _calculateArrowPosition({
     required double idealPosition,
     required double overlaySize,
     required double arrowSize,
@@ -192,6 +198,11 @@ class ArrowMiddleware implements PositioningMiddleware<ArrowData> {
 
     final minPosition = padding;
     final maxPosition = overlaySize - arrowSize - padding;
+
+    // If overlay is too small to fit the arrow with padding, don't render it
+    if (minPosition > maxPosition) {
+      return null;
+    }
 
     final clampedPosition = idealArrowStart.clamp(minPosition, maxPosition);
 
