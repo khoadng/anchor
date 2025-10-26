@@ -72,7 +72,7 @@ class VirtualReferenceMiddleware
 
   @override
   (PositionState, VirtualReferenceData?) run(PositionState state) {
-    final rect = reference.getBoundingRect();
+    final rect = reference.getBoundingRect(state);
     final config = state.config;
 
     // Calculate the offset needed to move from the original child's position
