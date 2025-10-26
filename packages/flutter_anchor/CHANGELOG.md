@@ -1,3 +1,7 @@
+## 0.0.5
+
+* Move tooltip, popover, and context menu to `anchor_ui` package
+
 ## 0.0.4
 
 * Add backdrop builder and dismissOnTapOutside to context menu
