@@ -6,5 +6,7 @@ environment:
 
 workspace:
   - packages/anchor
+  - packages/anchor_ui
+  - packages/anchor_ui/example
   - packages/flutter_anchor
   - packages/flutter_anchor/example

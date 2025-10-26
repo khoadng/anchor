@@ -1,4 +1,4 @@
-name: example
+name: anchor_ui_example
 description: "A new Flutter project."
 publish_to: 'none'
 version: 1.0.0+1
@@ -11,7 +11,8 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  flutter_anchor:
+  anchor_ui:
+  intl: ^0.20.2
 
 
 dev_dependencies:

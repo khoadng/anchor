@@ -1,8 +1,6 @@
 import 'package:flutter/widgets.dart';
-import 'package:meta/meta.dart';
 
 /// Configuration for anchor behavior within the widget tree.
-@internal
 class AnchorConfig extends InheritedWidget {
   /// Internal configuration for anchor behavior.
   const AnchorConfig({
