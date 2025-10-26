@@ -82,6 +82,7 @@ class PositioningConfig {
     required this.overlayHeight,
     required this.overlayWidth,
     this.explicitSpaces,
+    this.padding = EdgeInsets.zero,
   });
 
   /// The position of the child (anchor) widget relative to the viewport.
@@ -106,6 +107,12 @@ class PositioningConfig {
   /// Explicit spaces to use instead of deriving them from the viewport.
   final AvailableSpaces? explicitSpaces;
 
+  /// Padding to apply to the viewport boundaries.
+  ///
+  /// This reduces the available space on all sides, effectively creating
+  /// an inset viewport for positioning calculations.
+  final EdgeInsets padding;
+
   /// Creates a copy of this config with the given fields replaced.
   PositioningConfig copyWith({
     Offset? childPosition,
@@ -114,6 +121,7 @@ class PositioningConfig {
     double? overlayHeight,
     double? overlayWidth,
     AvailableSpaces? explicitSpaces,
+    EdgeInsets? padding,
   }) {
     return PositioningConfig(
       childPosition: childPosition ?? this.childPosition,
@@ -122,21 +130,34 @@ class PositioningConfig {
       overlayHeight: overlayHeight ?? this.overlayHeight,
       overlayWidth: overlayWidth ?? this.overlayWidth,
       explicitSpaces: explicitSpaces ?? this.explicitSpaces,
+      padding: padding ?? this.padding,
     );
   }
 
   /// Calculates the available space on all four sides of the child widget.
   ///
   /// If [explicitSpaces] is set, returns those spaces instead of calculating
-  /// them from the viewport.
-  AvailableSpaces get spaces =>
-      explicitSpaces ??
-      AvailableSpaces(
-        above: childPosition.dy,
-        below: viewportSize.height - (childPosition.dy + childSize.height),
-        left: childPosition.dx,
-        right: viewportSize.width - (childPosition.dx + childSize.width),
-      );
+  /// them from the viewport. The calculated spaces account for viewport padding,
+  /// ensuring the overlay stays within the padded boundaries.
+  AvailableSpaces get spaces {
+    if (explicitSpaces case final spaces?) return spaces;
+
+    final rawAbove = childPosition.dy - padding.top;
+    final rawBelow = viewportSize.height -
+        padding.bottom -
+        (childPosition.dy + childSize.height);
+    final rawLeft = childPosition.dx - padding.left;
+    final rawRight = viewportSize.width -
+        padding.right -
+        (childPosition.dx + childSize.width);
+
+    return AvailableSpaces(
+      above: rawAbove < 0 ? 0 : rawAbove,
+      below: rawBelow < 0 ? 0 : rawBelow,
+      left: rawLeft < 0 ? 0 : rawLeft,
+      right: rawRight < 0 ? 0 : rawRight,
+    );
+  }
 
   /// Checks if the overlay fits in the given [direction] based on the
   /// available space and the overlay's dimensions.

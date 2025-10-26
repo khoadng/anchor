@@ -82,15 +82,20 @@ class VirtualReferenceMiddleware
       rect.top - config.childPosition.dy,
     );
 
+    // Calculate available spaces from the virtual reference position,
+    // accounting for viewport padding. This is for subsequent middleware
+    // (flip, shift) to use for bounds checking.
+    final rawAbove = rect.top - config.padding.top;
+    final rawBelow = config.viewportSize.height - config.padding.bottom - (rect.top + rect.height);
+    final rawLeft = rect.left - config.padding.left;
+    final rawRight = config.viewportSize.width - config.padding.right - (rect.left + rect.width);
+
     final virtualConfig = config.copyWith(
-      // Calculate available spaces from the virtual reference position
-      // This is for subsequent middleware (flip, shift) to use for
-      // bounds checking.
       explicitSpaces: AvailableSpaces(
-        above: rect.top,
-        below: config.viewportSize.height - (rect.top + rect.height),
-        left: rect.left,
-        right: config.viewportSize.width - (rect.left + rect.width),
+        above: rawAbove < 0 ? 0 : rawAbove,
+        below: rawBelow < 0 ? 0 : rawBelow,
+        left: rawLeft < 0 ? 0 : rawLeft,
+        right: rawRight < 0 ? 0 : rawRight,
       ),
     );
 

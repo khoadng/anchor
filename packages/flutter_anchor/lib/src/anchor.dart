@@ -28,6 +28,7 @@ class Anchor extends StatefulWidget {
     this.offset,
     this.overlayHeight,
     this.overlayWidth,
+    this.viewPadding,
     this.triggerMode,
     this.placement,
     this.enableFlip,
@@ -61,6 +62,9 @@ class Anchor extends StatefulWidget {
 
   /// {@macro anchor_overlay_width}
   final double? overlayWidth;
+
+  /// {@macro anchor_view_padding}
+  final EdgeInsets? viewPadding;
 
   /// {@template anchor_trigger_mode}
   /// How the overlay is triggered and its mode-specific configuration.
@@ -364,6 +368,7 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
         offset: widget.offset,
         overlayHeight: widget.overlayHeight,
         overlayWidth: widget.overlayWidth,
+        viewPadding: widget.viewPadding,
         scrollBehavior: widget.scrollBehavior,
         onShowRequested: _handleShowRequested,
         onHideRequested: _handleHideRequested,

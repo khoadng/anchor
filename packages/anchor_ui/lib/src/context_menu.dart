@@ -149,6 +149,7 @@ class AnchorContextMenu extends StatefulWidget {
   /// Creates a context menu.
   const AnchorContextMenu({
     super.key,
+    this.viewPadding,
     this.placement,
     this.onShow,
     this.onDismiss,
@@ -173,6 +174,9 @@ class AnchorContextMenu extends StatefulWidget {
   ///
   /// Defaults to [Placement.bottomStart].
   final Placement? placement;
+
+  /// {@macro anchor_view_padding}
+  final EdgeInsets? viewPadding;
 
   /// Callback when the menu is shown.
   final VoidCallback? onShow;
@@ -261,6 +265,7 @@ class _AnchorContextMenuState extends State<AnchorContextMenu> {
             child: RawAnchor(
               controller: _anchorController,
               placement: widget.placement ?? Placement.bottomStart,
+              viewPadding: widget.viewPadding,
               onHide: widget.onDismiss,
               onShow: widget.onShow,
               backdropBuilder: widget.backdropBuilder,

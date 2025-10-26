@@ -41,6 +41,7 @@ class RawAnchor extends StatefulWidget {
     this.offset,
     this.overlayHeight,
     this.overlayWidth,
+    this.viewPadding,
     this.scrollBehavior,
     this.onShowRequested = _defaultOnShowRequested,
     this.onHideRequested = _defaultOnHideRequested,
@@ -78,6 +79,18 @@ class RawAnchor extends StatefulWidget {
   /// The width of the overlay content. Providing this helps with positioning.
   /// {@endtemplate}
   final double? overlayWidth;
+
+  /// {@template anchor_view_padding}
+  /// Padding to apply to the viewport boundaries when positioning the overlay.
+  ///
+  /// This reduces the available space on all sides, ensuring the overlay stays
+  /// within the padded area. This is particularly useful for avoiding system UI
+  /// elements like status bars, navigation bars, or you may want to keep some
+  /// distance from the screen edges for aesthetic reasons.
+  ///
+  /// If not specified, defaults to [EdgeInsets.zero]
+  /// {@endtemplate}
+  final EdgeInsets? viewPadding;
 
   /// {@template anchor_scroll_behavior}
   /// Defines how the overlay responds to scrolling of ancestor scrollable widgets.
@@ -253,7 +266,8 @@ class _RawAnchorState extends State<RawAnchor> {
     if (widget.overlayHeight == null || widget.overlayWidth == null) {
       _measuredOverlaySize = null;
     }
-    _calculateAnchorPoints();
+    // Prevent re-entrant calls, the below show method will call the overlay builder which will read the updated controller state anyway
+    _calculateAnchorPoints(notify: false);
     _overlayController.show();
     widget.onShow?.call();
   }
@@ -307,6 +321,7 @@ class _RawAnchorState extends State<RawAnchor> {
       viewportSize: screenSize,
       overlayHeight: effectiveOverlayHeight,
       overlayWidth: effectiveOverlayWidth,
+      padding: widget.viewPadding ?? EdgeInsets.zero,
     );
 
     final middlewares = _lastMiddlewares ?? AnchorMiddlewares.of(context);

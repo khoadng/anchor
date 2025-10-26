@@ -441,6 +441,7 @@ class _EmailItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnchorContextMenu(
+      viewPadding: const EdgeInsets.all(8),
       menuBuilder: (context) {
         return Material(
           elevation: 8,

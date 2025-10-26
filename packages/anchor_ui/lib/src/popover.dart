@@ -14,6 +14,7 @@ class AnchorPopover extends StatelessWidget {
     this.offset,
     this.overlayHeight,
     this.overlayWidth,
+    this.viewPadding,
     this.triggerMode,
     this.backgroundColor,
     this.borderRadius,
@@ -53,6 +54,9 @@ class AnchorPopover extends StatelessWidget {
 
   /// {@macro anchor_overlay_width}
   final double? overlayWidth;
+
+  /// {@macro anchor_view_padding}
+  final EdgeInsets? viewPadding;
 
   /// {@macro anchor_trigger_mode}
   final AnchorTriggerMode? triggerMode;
@@ -108,6 +112,7 @@ class AnchorPopover extends StatelessWidget {
         controller: controller,
         spacing: spacing,
         offset: offset,
+        viewPadding: viewPadding,
         overlayHeight: overlayHeight,
         overlayWidth: overlayWidth,
         triggerMode: triggerMode,

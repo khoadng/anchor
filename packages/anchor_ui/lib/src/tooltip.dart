@@ -14,6 +14,7 @@ class AnchorTooltip extends StatelessWidget {
     this.controller,
     this.spacing,
     this.offset,
+    this.viewPadding,
     this.triggerMode,
     this.backgroundColor,
     this.padding,
@@ -50,6 +51,9 @@ class AnchorTooltip extends StatelessWidget {
 
   /// {@macro anchor_offset}
   final Offset? offset;
+
+  /// {@macro anchor_view_padding}
+  final EdgeInsets? viewPadding;
 
   /// {@macro anchor_trigger_mode}
   final AnchorTriggerMode? triggerMode;
@@ -112,6 +116,7 @@ class AnchorTooltip extends StatelessWidget {
     return AnchorConfig(
       enableOverlayHover: false,
       child: AnchorPopover(
+        viewPadding: viewPadding,
         overlayBuilder: (context) => _TooltipAutoDismiss(
           showDuration: showDuration,
           child: Padding(

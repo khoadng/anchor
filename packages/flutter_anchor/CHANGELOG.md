@@ -1,3 +1,7 @@
+## 0.0.7
+
+* Add viewPadding
+
 ## 0.0.5
 
 * Move tooltip, popover, and context menu to `anchor_ui` package

@@ -73,6 +73,7 @@ class ShiftMiddleware implements PositioningMiddleware<ShiftData> {
               childPosition: config.childPosition,
               childSize: config.childSize,
               viewportSize: config.viewportSize.width,
+              padding: config.padding,
             ),
           null => state.anchorPoints,
         },
@@ -86,6 +87,7 @@ class ShiftMiddleware implements PositioningMiddleware<ShiftData> {
               childPosition: config.childPosition,
               childSize: config.childSize,
               viewportSize: config.viewportSize.height,
+              padding: config.padding,
             ),
           null => state.anchorPoints,
         },
@@ -104,6 +106,7 @@ class ShiftMiddleware implements PositioningMiddleware<ShiftData> {
     required Offset childPosition,
     required Size childSize,
     required double viewportSize,
+    required EdgeInsets padding,
   }) {
     final (childAnchorPos, overlayAnchorOffset, overlayOffset) = switch (axis) {
       Axis.horizontal => (
@@ -123,9 +126,15 @@ class ShiftMiddleware implements PositioningMiddleware<ShiftData> {
     final overlayStart = childAnchorPos - overlayAnchorOffset + overlayOffset;
     final overlayEnd = overlayStart + overlaySize;
 
+    // Calculate boundaries accounting for padding
+    final (boundaryStart, boundaryEnd) = switch (axis) {
+      Axis.horizontal => (padding.left, viewportSize - padding.right),
+      Axis.vertical => (padding.top, viewportSize - padding.bottom),
+    };
+
     // Calculate overflow amounts (positive means overflowing)
-    final overflowStart = 0.0 - overlayStart;
-    final overflowEnd = overlayEnd - viewportSize;
+    final overflowStart = boundaryStart - overlayStart;
+    final overflowEnd = overlayEnd - boundaryEnd;
 
     final shift = switch ((overflowStart, overflowEnd)) {
       (_, > 0) => -overflowEnd, // Overflowing end: shift toward start
