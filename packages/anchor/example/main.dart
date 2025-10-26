@@ -27,7 +27,7 @@ void _basicExample() {
   const pipeline = PositioningPipeline(
     middlewares: [
       // Add a 10px "gap" between the child and overlay
-      OffsetMiddleware(mainAxis: 10),
+      OffsetMiddleware(mainAxis: OffsetValue.value(10)),
     ],
   );
 

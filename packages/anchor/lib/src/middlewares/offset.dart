@@ -41,23 +41,65 @@ class OffsetData {
       'OffsetData(mainAxis: $mainAxisOffset, crossAxis: $crossAxisOffset, applied: $appliedOffset)';
 }
 
+/// A function that computes an offset value based on the current positioning state.
+typedef OffsetValueCallback = double Function(PositionState state);
+
+/// Represents an offset value that can be either a static double or a callback.
+@immutable
+class OffsetValue {
+  /// Creates an [OffsetValue] from a static double value.
+  const OffsetValue.value(double value)
+      : _value = value,
+        _callback = null;
+
+  /// Creates an [OffsetValue] that computes the offset based on the current state.
+  const OffsetValue.compute(OffsetValueCallback callback)
+      : _value = null,
+        _callback = callback;
+
+  final double? _value;
+  final OffsetValueCallback? _callback;
+
+  /// Resolves the offset value based on the current state.
+  double resolve(PositionState state) {
+    if (_callback != null) {
+      return _callback(state);
+    }
+    return _value ?? 0.0;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is OffsetValue &&
+          runtimeType == other.runtimeType &&
+          _value == other._value &&
+          _callback == other._callback;
+
+  @override
+  int get hashCode => Object.hash(_value, _callback);
+}
+
 /// A middleware that applies a positional offset to the overlay.
 @immutable
 class OffsetMiddleware implements PositioningMiddleware<OffsetData> {
   /// Creates an [OffsetMiddleware].
+  ///
+  /// The [mainAxis] and [crossAxis] parameters can be either static values
+  /// or computed dynamically using [OffsetValue.compute].
   const OffsetMiddleware({
-    this.mainAxis = 0.0,
-    this.crossAxis = 0.0,
+    this.mainAxis = const OffsetValue.value(0),
+    this.crossAxis = const OffsetValue.value(0),
   });
 
   /// The offset along the main axis (e.g., vertical for `top`/`bottom`).
   /// A positive value moves the overlay *away* from the child.
-  final double mainAxis;
+  final OffsetValue mainAxis;
 
   /// The offset along the cross axis (e.g., horizontal for `top`/`bottom`).
   /// A positive value typically moves the overlay to the right (for `top`/`bottom`)
   /// or down (for `left`/`right`).
-  final double crossAxis;
+  final OffsetValue crossAxis;
 
   @override
   bool operator ==(Object other) =>
@@ -71,18 +113,19 @@ class OffsetMiddleware implements PositioningMiddleware<OffsetData> {
   int get hashCode => Object.hash(mainAxis, crossAxis);
 
   @override
-  String toString() =>
-      'OffsetMiddleware(mainAxis: $mainAxis, crossAxis: $crossAxis)';
+  String toString() => 'OffsetMiddleware(mainAxis: $mainAxis, crossAxis: $crossAxis)';
 
   @override
   (PositionState, OffsetData?) run(PositionState state) {
     final points = state.anchorPoints;
+    final resolvedMainAxis = mainAxis.resolve(state);
+    final resolvedCrossAxis = crossAxis.resolve(state);
 
     final newOffset = switch (points) {
-      _ when points.isAbove => Offset(crossAxis, -mainAxis),
-      _ when points.isBelow => Offset(crossAxis, mainAxis),
-      _ when points.isLeft => Offset(-mainAxis, crossAxis),
-      _ when points.isRight => Offset(mainAxis, crossAxis),
+      _ when points.isAbove => Offset(resolvedCrossAxis, -resolvedMainAxis),
+      _ when points.isBelow => Offset(resolvedCrossAxis, resolvedMainAxis),
+      _ when points.isLeft => Offset(-resolvedMainAxis, resolvedCrossAxis),
+      _ when points.isRight => Offset(resolvedMainAxis, resolvedCrossAxis),
       _ => Offset.zero,
     };
 
@@ -95,8 +138,8 @@ class OffsetMiddleware implements PositioningMiddleware<OffsetData> {
     return (
       newState,
       OffsetData(
-        mainAxisOffset: mainAxis,
-        crossAxisOffset: crossAxis,
+        mainAxisOffset: resolvedMainAxis,
+        crossAxisOffset: resolvedCrossAxis,
         appliedOffset: newOffset,
       ),
     );

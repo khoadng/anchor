@@ -282,6 +282,7 @@ class _AnchorState extends State<Anchor> {
 
     return switch (AnchorMiddlewares.maybeOf(context)) {
       null => [
+          OffsetMiddleware(mainAxis: OffsetValue.value(spacing)),
           if (enableFlip)
             FlipMiddleware(
               preferredDirection: placement.direction,
@@ -290,7 +291,6 @@ class _AnchorState extends State<Anchor> {
             ShiftMiddleware(
               preferredDirection: placement.direction,
             ),
-          OffsetMiddleware(mainAxis: spacing),
         ],
       final middlewares => middlewares,
     };

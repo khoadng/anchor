@@ -140,13 +140,13 @@ class AnchorPopover extends StatelessWidget {
     final effectiveSpacing = spacing ?? 4;
 
     return [
+      OffsetMiddleware(mainAxis: OffsetValue.value(effectiveSpacing)),
       FlipMiddleware(
         preferredDirection: effectivePlacement.direction,
       ),
       ShiftMiddleware(
         preferredDirection: effectivePlacement.direction,
       ),
-      OffsetMiddleware(mainAxis: effectiveSpacing),
       ArrowMiddleware(
         arrowSize: arrowSize ?? const Size(20, 10),
       ),

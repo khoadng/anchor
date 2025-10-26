@@ -18,7 +18,7 @@ void main() {
 
   group('Basic Middleware Tests', () {
     test('OffsetMiddleware adds mainAxis gap', () {
-      const middleware = OffsetMiddleware(mainAxis: 10);
+      const middleware = OffsetMiddleware(mainAxis: OffsetValue.value(10));
       final initialState = PositionState.fromPlacement(
         Placement.top,
         defaultConfig,
