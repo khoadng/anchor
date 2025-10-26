@@ -14,6 +14,7 @@ const _defaultTriggerMode = TapTriggerMode();
 const _defaultWaitDuration = Duration.zero;
 const _defaultConsumeOutsideTap = false;
 const _defaultDismissOnTapOutside = true;
+const _defaultTransitionDuration = Duration(milliseconds: 100);
 
 /// A widget that displays a pop-up overlay relative to its child.
 class Anchor extends StatefulWidget {
@@ -117,7 +118,7 @@ class Anchor extends StatefulWidget {
   State<Anchor> createState() => _AnchorState();
 }
 
-class _AnchorState extends State<Anchor> {
+class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
   final _tapRegionGroupId = Object();
 
   final _isChildHovered = ValueNotifier<bool>(false);
@@ -129,6 +130,7 @@ class _AnchorState extends State<Anchor> {
 
   AnchorController? _internalController;
   FocusNode? _internalFocusNode;
+  late final AnimationController _animationController;
 
   AnchorController get _controller =>
       widget.controller ?? (_internalController ??= AnchorController());
@@ -164,9 +166,16 @@ class _AnchorState extends State<Anchor> {
         _ => _defaultDismissOnTapOutside,
       };
 
+  Duration get _effectiveTransitionDuration =>
+      widget.transitionDuration ?? _defaultTransitionDuration;
+
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: _effectiveTransitionDuration,
+    );
     _isChildHovered.addListener(_handleHoverChange);
     _isOverlayHovered.addListener(_handleHoverChange);
     _focusNode?.addListener(_handleFocusChange);
@@ -175,6 +184,9 @@ class _AnchorState extends State<Anchor> {
   @override
   void didUpdateWidget(Anchor oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.transitionDuration != widget.transitionDuration) {
+      _animationController.duration = _effectiveTransitionDuration;
+    }
     if (oldWidget.triggerMode != widget.triggerMode) {
       final oldTriggerMode = oldWidget.triggerMode;
       final oldFocusNode =
@@ -190,6 +202,7 @@ class _AnchorState extends State<Anchor> {
 
   @override
   void dispose() {
+    _animationController.dispose();
     _isChildHovered.removeListener(_handleHoverChange);
     _isOverlayHovered.removeListener(_handleHoverChange);
     _focusNode?.removeListener(_handleFocusChange);
@@ -274,6 +287,33 @@ class _AnchorState extends State<Anchor> {
     }
   }
 
+  void _handleShowRequested(VoidCallback showOverlay) {
+    showOverlay();
+    _animationController.forward();
+  }
+
+  void _handleHideRequested(VoidCallback hideOverlay) {
+    _animationController.reverse().then((_) {
+      if (mounted) {
+        hideOverlay();
+      }
+    });
+  }
+
+  Widget _defaultTransitionBuilder(
+    BuildContext context,
+    Animation<double> animation,
+    Widget child,
+  ) {
+    if (_effectiveTransitionDuration == Duration.zero) {
+      return child;
+    }
+    return FadeTransition(
+      opacity: CurvedAnimation(parent: animation, curve: Curves.ease),
+      child: child,
+    );
+  }
+
   List<PositioningMiddleware> _buildMiddlewares(BuildContext context) {
     final placement = widget.placement ?? Placement.top;
     final enableFlip = widget.enableFlip ?? true;
@@ -325,38 +365,42 @@ class _AnchorState extends State<Anchor> {
         overlayHeight: widget.overlayHeight,
         overlayWidth: widget.overlayWidth,
         scrollBehavior: widget.scrollBehavior,
-        transitionDuration: widget.transitionDuration,
-        transitionBuilder: widget.transitionBuilder,
+        onShowRequested: _handleShowRequested,
+        onHideRequested: _handleHideRequested,
         backdropBuilder: widget.backdropBuilder,
         onShow: widget.onShow,
         onHide: widget.onHide,
         overlayBuilder: (context) {
-          return TapRegion(
-            groupId: enabled ? _tapRegionGroupId : null,
-            onTapOutside: (enableTap ||
-                    enableLongPress ||
-                    (enableFocus && _effectiveDismissOnTapOutside))
-                ? _handleTapOutside
-                : null,
-            consumeOutsideTaps: enabled && _effectiveConsumeOutsideTap,
-            child: FocusScope(
-              descendantsAreTraversable: false,
-              canRequestFocus: false,
-              skipTraversal: true,
-              onFocusChange: (hasFocus) {
-                if (enableFocus) {
-                  _isOverlayFocused.value = hasFocus;
-                  _handleFocusChange();
-                }
-              },
-              child: MouseRegion(
-                onEnter: enableHover && enableOverlayHover
-                    ? (_) => _isOverlayHovered.value = true
-                    : null,
-                onExit: enableHover && enableOverlayHover
-                    ? (_) => _isOverlayHovered.value = false
-                    : null,
-                child: widget.overlayBuilder(context),
+          return (widget.transitionBuilder ?? _defaultTransitionBuilder)(
+            context,
+            _animationController,
+            TapRegion(
+              groupId: enabled ? _tapRegionGroupId : null,
+              onTapOutside: (enableTap ||
+                      enableLongPress ||
+                      (enableFocus && _effectiveDismissOnTapOutside))
+                  ? _handleTapOutside
+                  : null,
+              consumeOutsideTaps: enabled && _effectiveConsumeOutsideTap,
+              child: FocusScope(
+                descendantsAreTraversable: false,
+                canRequestFocus: false,
+                skipTraversal: true,
+                onFocusChange: (hasFocus) {
+                  if (enableFocus) {
+                    _isOverlayFocused.value = hasFocus;
+                    _handleFocusChange();
+                  }
+                },
+                child: MouseRegion(
+                  onEnter: enableHover && enableOverlayHover
+                      ? (_) => _isOverlayHovered.value = true
+                      : null,
+                  onExit: enableHover && enableOverlayHover
+                      ? (_) => _isOverlayHovered.value = false
+                      : null,
+                  child: widget.overlayBuilder(context),
+                ),
               ),
             ),
           );

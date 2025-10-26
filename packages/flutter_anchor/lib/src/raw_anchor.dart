@@ -8,8 +8,19 @@ import 'data.dart';
 import 'geometry.dart';
 import 'middlewares.dart';
 
-const _defaultTransitionDuration = Duration(milliseconds: 100);
 const _defaultScrollBehavior = AnchorScrollBehavior.dismiss;
+
+/// Signature for the callback used by [RawAnchor.onShowRequested] to
+/// intercept requests to show the overlay.
+typedef RawAnchorShowRequestedCallback = void Function(
+  VoidCallback showOverlay,
+);
+
+/// Signature for the callback used by [RawAnchor.onHideRequested] to
+/// intercept requests to hide the overlay.
+typedef RawAnchorHideRequestedCallback = void Function(
+  VoidCallback hideOverlay,
+);
 
 /// A low-level widget that displays a pop-up overlay relative to its child.
 ///
@@ -18,7 +29,7 @@ const _defaultScrollBehavior = AnchorScrollBehavior.dismiss;
 /// the overlay will show at the preferred placement without any adjustment logic.
 ///
 /// For a widget that includes built-in trigger logic and default positioning
-/// middlewares, see [Anchor].
+/// middlewares with animations, consider using [Anchor] instead.
 class RawAnchor extends StatefulWidget {
   /// Creates a [RawAnchor] widget.
   const RawAnchor({
@@ -31,8 +42,8 @@ class RawAnchor extends StatefulWidget {
     this.overlayHeight,
     this.overlayWidth,
     this.scrollBehavior,
-    this.transitionDuration,
-    this.transitionBuilder,
+    this.onShowRequested = _defaultOnShowRequested,
+    this.onHideRequested = _defaultOnHideRequested,
     this.backdropBuilder,
     this.onShow,
     this.onHide,
@@ -81,15 +92,34 @@ class RawAnchor extends StatefulWidget {
   /// {@endtemplate}
   final AnchorScrollBehavior? scrollBehavior;
 
-  /// {@template anchor_transition_duration}
-  /// The duration for the entry and exit animations.
-  /// {@endtemplate}
-  final Duration? transitionDuration;
+  /// Called when a request is made to show the overlay.
+  ///
+  /// This callback is triggered when [AnchorController.show] is called.
+  ///
+  /// After a show request is intercepted, the `showOverlay` callback should be
+  /// called when the overlay is ready to be shown. This can occur immediately
+  /// (the default behavior), or after a delay or animation setup. Calling
+  /// `showOverlay` makes the overlay visible in the widget tree.
+  ///
+  /// If `showOverlay` is not called, the overlay will stay hidden.
+  ///
+  /// Defaults to a callback that immediately shows the overlay.
+  final RawAnchorShowRequestedCallback onShowRequested;
 
-  /// {@template anchor_transition_builder}
-  /// A custom builder for the overlay's animation.
-  /// {@endtemplate}
-  final AnimatedTransitionBuilder? transitionBuilder;
+  /// Called when a request is made to hide the overlay.
+  ///
+  /// This callback is triggered when [AnchorController.hide] is called or when
+  /// scroll behavior triggers a hide.
+  ///
+  /// After a hide request is intercepted and any closing behaviors have completed
+  /// (such as exit animations), the `hideOverlay` callback should be called to
+  /// actually remove the overlay from the widget tree.
+  ///
+  /// If the overlay uses animations, `hideOverlay` should be called after the
+  /// exit animation completes.
+  ///
+  /// Defaults to a callback that immediately hides the overlay.
+  final RawAnchorHideRequestedCallback onHideRequested;
 
   /// {@template anchor_backdrop_builder}
   /// A builder for the backdrop widget displayed behind the overlay.
@@ -106,18 +136,23 @@ class RawAnchor extends StatefulWidget {
   /// {@endtemplate}
   final VoidCallback? onHide;
 
+  static void _defaultOnShowRequested(VoidCallback showOverlay) {
+    showOverlay();
+  }
+
+  static void _defaultOnHideRequested(VoidCallback hideOverlay) {
+    hideOverlay();
+  }
+
   @override
   State<RawAnchor> createState() => _RawAnchorState();
 }
 
-class _RawAnchorState extends State<RawAnchor>
-    with SingleTickerProviderStateMixin {
+class _RawAnchorState extends State<RawAnchor> {
   final _overlayController = OverlayPortalController();
   final _layerLink = LayerLink();
 
   Size? _lastScreenSize;
-  late final AnimationController _animationController;
-
   ScrollPosition? _scrollPosition;
 
   Size? _measuredOverlaySize;
@@ -132,20 +167,12 @@ class _RawAnchorState extends State<RawAnchor>
 
   AnchorController get _controller => widget.controller;
 
-  Duration get _effectiveTransitionDuration =>
-      widget.transitionDuration ?? _defaultTransitionDuration;
-
   AnchorScrollBehavior get _effectiveScrollBehavior =>
       widget.scrollBehavior ?? _defaultScrollBehavior;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: _effectiveTransitionDuration,
-    );
-    _animationController.addStatusListener(_handleAnimationStatusChanged);
     _controller.addListener(_handleControllerChange);
   }
 
@@ -155,9 +182,6 @@ class _RawAnchorState extends State<RawAnchor>
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_handleControllerChange);
       _controller.addListener(_handleControllerChange);
-    }
-    if (oldWidget.transitionDuration != widget.transitionDuration) {
-      _animationController.duration = _effectiveTransitionDuration;
     }
   }
 
@@ -204,25 +228,25 @@ class _RawAnchorState extends State<RawAnchor>
 
   @override
   void dispose() {
-    _animationController.removeStatusListener(_handleAnimationStatusChanged);
-    _animationController.dispose();
     _controller.removeListener(_handleControllerChange);
     _scrollPosition?.removeListener(_handleScroll);
     super.dispose();
   }
 
-  void _handleAnimationStatusChanged(AnimationStatus status) {
-    if (status == AnimationStatus.dismissed && _overlayController.isShowing) {
-      _overlayController.hide();
+  void _handleControllerChange() {
+    if (_controller.isShowing) {
+      handleShowRequest();
+    } else {
+      handleHideRequest();
     }
   }
 
-  void _handleControllerChange() {
-    if (_controller.isShowing) {
-      _showOverlay();
-    } else {
-      _hideOverlay();
-    }
+  void handleShowRequest() {
+    widget.onShowRequested(_showOverlay);
+  }
+
+  void handleHideRequest() {
+    widget.onHideRequested(_hideOverlay);
   }
 
   void _showOverlay() {
@@ -232,7 +256,6 @@ class _RawAnchorState extends State<RawAnchor>
     }
     _calculateAnchorPoints();
     _overlayController.show();
-    _animationController.forward();
     widget.onShow?.call();
   }
 
@@ -258,7 +281,7 @@ class _RawAnchorState extends State<RawAnchor>
 
   void _hideOverlay() {
     if (!_overlayController.isShowing) return;
-    _animationController.reverse();
+    _overlayController.hide();
     widget.onHide?.call();
   }
 
@@ -320,32 +343,17 @@ class _RawAnchorState extends State<RawAnchor>
     );
   }
 
-  Widget _defaultTransitionBuilder(
-    BuildContext context,
-    Animation<double> animation,
-    Widget child,
-  ) {
-    if (_effectiveTransitionDuration == Duration.zero) {
-      return child;
-    }
-    return FadeTransition(
-      opacity: CurvedAnimation(parent: animation, curve: Curves.ease),
-      child: child,
-    );
-  }
-
   void _handleScroll() {
     if (!_overlayController.isShowing) return;
-    if (_animationController.isAnimating) return;
 
     switch (_effectiveScrollBehavior) {
       case AnchorScrollBehavior.dismiss:
-        _hideOverlay();
+        handleHideRequest();
       case AnchorScrollBehavior.reposition:
         if (_isChildInViewport()) {
           _calculateAnchorPoints();
         } else {
-          _hideOverlay();
+          handleHideRequest();
         }
       case AnchorScrollBehavior.none:
         break;
@@ -399,14 +407,9 @@ class _RawAnchorState extends State<RawAnchor>
                       alignment: points.overlayAlignment,
                       child: Opacity(
                         opacity: _isWaitingForMeasurement ? 0.0 : 1.0,
-                        child: (widget.transitionBuilder ??
-                            _defaultTransitionBuilder)(
-                          context,
-                          _animationController,
-                          _MeasureSize(
-                            onChange: _handleOverlaySizeMeasured,
-                            child: widget.overlayBuilder(context),
-                          ),
+                        child: _MeasureSize(
+                          onChange: _handleOverlaySizeMeasured,
+                          child: widget.overlayBuilder(context),
                         ),
                       ),
                     ),
