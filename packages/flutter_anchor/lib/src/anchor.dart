@@ -31,8 +31,7 @@ class Anchor extends StatefulWidget {
     this.viewPadding,
     this.triggerMode,
     this.placement,
-    this.enableFlip,
-    this.enableShift,
+    this.middlewares,
     this.scrollBehavior,
     this.transitionDuration,
     this.transitionBuilder,
@@ -74,21 +73,15 @@ class Anchor extends StatefulWidget {
   /// {@macro anchor_placement}
   final Placement? placement;
 
-  /// {@template anchor_enable_flip}
-  /// Whether to enable flipping the overlay to the opposite side if it
-  /// doesn't fit in the preferred placement direction.
+  /// {@template anchor_middlewares}
+  /// Custom positioning middlewares to apply to the overlay.
   ///
-  /// Defaults to `true`.
+  /// If not provided, defaults to:
+  /// - [OffsetMiddleware] with spacing from the anchor
+  /// - [FlipMiddleware] to flip when needed
+  /// - [ShiftMiddleware] to shift along the cross-axis
   /// {@endtemplate}
-  final bool? enableFlip;
-
-  /// {@template anchor_enable_shift}
-  /// Whether to enable shifting the overlay's alignment along the cross-axis
-  /// to prevent it from overflowing the viewport edges.
-  ///
-  /// Defaults to `true`.
-  /// {@endtemplate}
-  final bool? enableShift;
+  final List<PositioningMiddleware>? middlewares;
 
   /// {@macro anchor_scroll_behavior}
   final AnchorScrollBehavior? scrollBehavior;
@@ -319,15 +312,14 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
   }
 
   List<PositioningMiddleware> _buildMiddlewares(BuildContext context) {
-    final enableFlip = widget.enableFlip ?? true;
-    final enableShift = widget.enableShift ?? true;
-    final spacing = widget.spacing ?? 4;
-
-    return [
-      OffsetMiddleware(mainAxis: OffsetValue.value(spacing)),
-      if (enableFlip) const FlipMiddleware(),
-      if (enableShift) const ShiftMiddleware(),
-    ];
+    return switch (widget.middlewares) {
+      final middlewares? => middlewares,
+      _ => [
+          OffsetMiddleware(mainAxis: OffsetValue.value(widget.spacing ?? 4)),
+          const FlipMiddleware(),
+          const ShiftMiddleware(),
+        ],
+    };
   }
 
   @override

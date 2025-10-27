@@ -51,29 +51,35 @@ class AnchorTooltip extends StatelessWidget {
     required Widget content,
     required Widget child,
   }) {
-    return Anchor(
-      key: key,
-      controller: controller,
-      spacing: spacing,
-      offset: offset,
-      viewPadding: viewPadding,
-      triggerMode: triggerMode,
-      placement: placement,
-      transitionDuration: transitionDuration,
-      transitionBuilder: transitionBuilder,
-      onShow: onShow,
-      onHide: onHide,
-      enabled: enabled,
-      overlayBuilder: (context) => AnchorArrowContainer(
-        backgroundColor: backgroundColor,
-        borderRadius: borderRadius,
-        arrowShape: arrowShape,
-        arrowSize: arrowSize,
-        border: border,
-        boxShadow: boxShadow,
-        child: content,
+    return AnchorConfig(
+      enableOverlayHover: false,
+      child: Anchor(
+        key: key,
+        controller: controller,
+        spacing: spacing,
+        offset: offset,
+        viewPadding: viewPadding,
+        triggerMode: triggerMode,
+        placement: placement,
+        transitionDuration: transitionDuration,
+        transitionBuilder: transitionBuilder,
+        onShow: onShow,
+        onHide: onHide,
+        enabled: enabled,
+        overlayBuilder: (context) => _TooltipAutoDismiss(
+          showDuration: showDuration,
+          child: AnchorArrowContainer(
+            backgroundColor: backgroundColor,
+            borderRadius: borderRadius,
+            arrowShape: arrowShape,
+            arrowSize: arrowSize,
+            border: border,
+            boxShadow: boxShadow,
+            child: content,
+          ),
+        ),
+        child: child,
       ),
-      child: child,
     );
   }
 

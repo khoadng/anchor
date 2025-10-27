@@ -105,46 +105,42 @@ class AnchorPopover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnchorMiddlewares(
+    return Anchor(
+      key: key,
       middlewares: _buildMiddlewares(),
-      child: Anchor(
-        key: key,
-        controller: controller,
-        spacing: spacing,
-        offset: offset,
-        viewPadding: viewPadding,
-        overlayHeight: overlayHeight,
-        overlayWidth: overlayWidth,
-        triggerMode: triggerMode,
-        placement: placement,
-        scrollBehavior: scrollBehavior,
-        transitionDuration: transitionDuration,
-        transitionBuilder: transitionBuilder,
-        backdropBuilder: backdropBuilder,
-        onShow: onShow,
-        onHide: onHide,
-        enabled: enabled,
-        overlayBuilder: (context) {
-          return AnchorArrowContainer(
-            backgroundColor: backgroundColor,
-            borderRadius: borderRadius,
-            arrowShape: arrowShape,
-            arrowSize: arrowSize,
-            boxShadow: boxShadow,
-            border: border,
-            child: overlayBuilder(context),
-          );
-        },
-        child: child,
-      ),
+      controller: controller,
+      spacing: spacing,
+      offset: offset,
+      viewPadding: viewPadding,
+      overlayHeight: overlayHeight,
+      overlayWidth: overlayWidth,
+      triggerMode: triggerMode,
+      placement: placement,
+      scrollBehavior: scrollBehavior,
+      transitionDuration: transitionDuration,
+      transitionBuilder: transitionBuilder,
+      backdropBuilder: backdropBuilder,
+      onShow: onShow,
+      onHide: onHide,
+      enabled: enabled,
+      overlayBuilder: (context) {
+        return AnchorArrowContainer(
+          backgroundColor: backgroundColor,
+          borderRadius: borderRadius,
+          arrowShape: arrowShape,
+          arrowSize: arrowSize,
+          boxShadow: boxShadow,
+          border: border,
+          child: overlayBuilder(context),
+        );
+      },
+      child: child,
     );
   }
 
   List<PositioningMiddleware> _buildMiddlewares() {
-    final effectiveSpacing = spacing ?? 4;
-
     return [
-      OffsetMiddleware(mainAxis: OffsetValue.value(effectiveSpacing)),
+      OffsetMiddleware(mainAxis: OffsetValue.value(spacing ?? 4)),
       const FlipMiddleware(),
       const ShiftMiddleware(),
       ArrowMiddleware(

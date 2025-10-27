@@ -103,7 +103,9 @@ class _ChatMessageState extends State<_ChatMessage> {
                   : const LongPressTriggerMode(),
               offset: Offset.zero,
               placement: Placement.top,
-              enableFlip: false,
+              middlewares: const [
+                ShiftMiddleware(),
+              ],
               overlayBuilder: (context) => _EmojiReactionBar(
                 onEmojiSelected: (emoji) {
                   setState(() {
@@ -269,7 +271,6 @@ class _EmojiButtonState extends State<_EmojiButton> {
         waitDuration: Duration(milliseconds: 400),
       ),
       placement: Placement.top,
-      enableFlip: false,
       overlayBuilder: (context) => IntrinsicHeight(
         child: IntrinsicWidth(
           child: Container(
