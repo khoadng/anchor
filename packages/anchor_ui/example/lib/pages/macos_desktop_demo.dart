@@ -55,19 +55,26 @@ class _MacosDesktopDemoState extends State<MacosDesktopDemo> {
       triggerMode: const AnchorTriggerMode.manual(),
       placement: Placement.bottomStart,
       offset: const Offset(0, 10),
-      overlayBuilder: (context) => DecoratedBox(
-        decoration: BoxDecoration(
-          color: Colors.grey[850],
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+      overlayBuilder: (context) => TapRegion(
+        onTapOutside: (event) {
+          if (_activeMenuKey != null) {
+            _toggleMenu(_activeMenuKey!);
+          }
+        },
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.grey[850],
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: content,
         ),
-        child: content,
       ),
       child: _MenuBarItem(
         icon: Icon(icon, color: Colors.black87),
@@ -81,115 +88,165 @@ class _MacosDesktopDemoState extends State<MacosDesktopDemo> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: GestureDetector(
-        // This gesture detector handles taps on the main content area,
-        // which closes any active overlay.
-        onTap: () {
-          if (_activeMenuKey != null) {
-            _toggleMenu(_activeMenuKey!);
-          }
-        },
-        behavior: HitTestBehavior.translucent,
-        child: SafeArea(
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                color: Colors.grey[200],
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.black87),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                    const Spacer(),
-                    _buildMenuItem(
-                      key: 'music',
-                      icon: Icons.music_note,
-                      content: const _MusicPopoverContent(),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildMenuItem(
-                      key: 'bluetooth',
-                      icon: Icons.bluetooth,
-                      content: const _BluetoothPopoverContent(),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildMenuItem(
-                      key: 'wifi',
-                      icon: Icons.wifi,
-                      content: const _WifiPopoverContent(),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildMenuItem(
-                      key: 'battery',
-                      icon: Icons.battery_charging_full,
-                      content: const _BatteryPopoverContent(),
-                    ),
-                    const SizedBox(width: 16),
-                    const MenuBarClock(),
-                    const SizedBox(width: 8),
-                  ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildStatusBar(context),
+            Expanded(
+              child: AnchorContextMenu(
+                placement: Placement.rightStart,
+                viewPadding: const EdgeInsets.all(8),
+                menuBuilder: _buildContextMenu,
+                childBuilder: (context) => GestureDetector(
+                  onSecondaryTapDown: isDesktop
+                      ? (event) {
+                          context.showMenu(event.globalPosition);
+                        }
+                      : null,
+                  onLongPressStart: !isDesktop
+                      ? (details) {
+                          context.showMenu(details.globalPosition);
+                        }
+                      : null,
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              isDesktop
+                                  ? 'Click an icon in the top-right bar, hover over dock icons, or right-click on background. 👆'
+                                  : 'Click an icon in the top-right bar, hover over dock icons, or long-press on background. 👆',
+                              style: const TextStyle(color: Colors.grey),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _isDockOnLeft = !_isDockOnLeft;
+                                });
+                              },
+                              icon: Icon(
+                                _isDockOnLeft
+                                    ? Icons.arrow_downward
+                                    : Icons.arrow_back,
+                              ),
+                              label: Text(
+                                _isDockOnLeft
+                                    ? 'Move Dock to Bottom'
+                                    : 'Move Dock to Left',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!_isDockOnLeft)
+                        Positioned(
+                          bottom: 16,
+                          left: 0,
+                          right: 0,
+                          child: Center(child: _MacosDock(isVertical: false)),
+                        ),
+                      if (_isDockOnLeft)
+                        Positioned(
+                          left: 16,
+                          top: 0,
+                          bottom: 0,
+                          child: Center(child: _MacosDock(isVertical: true)),
+                        ),
+                    ],
+                  ),
                 ),
               ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'Click an icon in the top-right bar or hover over dock icons. 👆',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              setState(() {
-                                _isDockOnLeft = !_isDockOnLeft;
-                              });
-                            },
-                            icon: Icon(
-                              _isDockOnLeft
-                                  ? Icons.arrow_downward
-                                  : Icons.arrow_back,
-                            ),
-                            label: Text(
-                              _isDockOnLeft
-                                  ? 'Move Dock to Bottom'
-                                  : 'Move Dock to Left',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (!_isDockOnLeft)
-                      Positioned(
-                        bottom: 16,
-                        left: 0,
-                        right: 0,
-                        child: Center(child: _MacosDock(isVertical: false)),
-                      ),
-                    if (_isDockOnLeft)
-                      Positioned(
-                        left: 16,
-                        top: 0,
-                        bottom: 0,
-                        child: Center(child: _MacosDock(isVertical: true)),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildContextMenu(BuildContext context) {
+    return Material(
+      elevation: 8,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 180,
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _ContextMenuItem(
+              icon: Icons.refresh,
+              label: 'Refresh',
+              onTap: () => context.hideMenu(),
+            ),
+            _ContextMenuItem(
+              icon: Icons.sort,
+              label: 'Sort By',
+              onTap: () => context.hideMenu(),
+            ),
+            Divider(height: 1, color: Colors.grey[300]),
+            _ContextMenuItem(
+              icon: Icons.display_settings,
+              label: 'Settings',
+              onTap: () => context.hideMenu(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 8,
+      ),
+      color: Colors.grey[200],
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black87),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          const Spacer(),
+          _buildMenuItem(
+            key: 'music',
+            icon: Icons.music_note,
+            content: const _MusicPopoverContent(),
+          ),
+          const SizedBox(width: 8),
+          _buildMenuItem(
+            key: 'bluetooth',
+            icon: Icons.bluetooth,
+            content: const _BluetoothPopoverContent(),
+          ),
+          const SizedBox(width: 8),
+          _buildMenuItem(
+            key: 'wifi',
+            icon: Icons.wifi,
+            content: const _WifiPopoverContent(),
+          ),
+          const SizedBox(width: 8),
+          _buildMenuItem(
+            key: 'battery',
+            icon: Icons.battery_charging_full,
+            content: const _BatteryPopoverContent(),
+          ),
+          const SizedBox(width: 16),
+          const MenuBarClock(),
+          const SizedBox(width: 8),
+        ],
       ),
     );
   }
@@ -544,10 +601,13 @@ class _DockIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnchorTooltip(
-      message: Text(
-        app.name,
-        style: const TextStyle(color: Colors.white, fontSize: 12),
+    return AnchorTooltip.arrow(
+      content: Container(
+        padding: const EdgeInsets.all(8),
+        child: Text(
+          app.name,
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
       ),
       triggerMode: isDesktop
           ? const AnchorTriggerMode.hover()
@@ -572,6 +632,42 @@ class _DockIcon extends StatelessWidget {
           ],
         ),
         child: Icon(app.icon, color: Colors.white, size: 28),
+      ),
+    );
+  }
+}
+
+/// Context menu item widget
+class _ContextMenuItem extends StatelessWidget {
+  const _ContextMenuItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: Colors.grey[700]),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

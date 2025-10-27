@@ -189,6 +189,7 @@ class _ContextMenuDemoState extends State<ContextMenuDemo> {
           ),
           Expanded(
             child: AnchorContextMenu(
+              placement: Placement.rightStart,
               menuBuilder: (context) {
                 return Material(
                   elevation: 8,
@@ -441,6 +442,7 @@ class _EmailItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnchorContextMenu(
+      placement: Placement.rightStart,
       viewPadding: const EdgeInsets.all(8),
       menuBuilder: (context) {
         return Material(
@@ -706,6 +708,7 @@ class _EmailSection extends StatelessWidget {
     if (emails.isEmpty) return const SizedBox.shrink();
 
     return AnchorContextMenu(
+      placement: Placement.rightStart,
       menuBuilder: (context) {
         return Material(
           elevation: 8,

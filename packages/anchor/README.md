@@ -10,7 +10,7 @@ This engine is inspired by the powerful JavaScript library [Floating UI](https:/
 
 This engine includes several common middlewares:
 
-  * **`OffsetMiddleware`**: Applies a positional offset, commonly used to add a "gap" between the anchor and the overlay.
+  * **`OffsetMiddleware`**: Applies a positional offset, commonly used to add a "gap" between the anchor and the overlay or create custom positional adjustments.
   * **`FlipMiddleware`**: Flips the overlay to the opposite side (e.g., `top` to `bottom`) if it overflows the viewport in its preferred direction.
   * **`ShiftMiddleware`**: Adjusts the overlay's alignment along its cross-axis (e.g., shifting it left or right) to prevent it from overflowing the viewport.
   * **`AutoPlacementMiddleware`**: Automatically chooses the best placement (e.g., `top`, `bottom`, `left`, `right`) based on which side has the most available space.
@@ -35,6 +35,7 @@ final config = PositioningConfig(
   viewportSize: const Size(800, 600),
   overlayWidth: 150,
   overlayHeight: 75,
+  placement: Placement.top,
 );
 
 // 2. Create a pipeline with your desired logic
@@ -44,17 +45,16 @@ final pipeline = PositioningPipeline(
     const OffsetMiddleware(mainAxis: 10),
     
     // Flip if it overflows
-    const FlipMiddleware(preferredDirection: AnchorAxisDirection.up),
+    const FlipMiddleware(),
     
     // Shift if it still overflows
-    const ShiftMiddleware(preferredDirection: AnchorAxisDirection.up),
+    const ShiftMiddleware(),
   ],
 );
 
 // 3. Run the calculation
 // Start by trying to place the overlay on top
 final result = pipeline.run(
-  placement: Placement.top,
   config: config,
 );
 

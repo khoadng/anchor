@@ -81,6 +81,7 @@ class PositioningConfig {
     required this.viewportSize,
     required this.overlayHeight,
     required this.overlayWidth,
+    required this.placement,
     this.explicitSpaces,
     this.padding = EdgeInsets.zero,
   });
@@ -113,6 +114,9 @@ class PositioningConfig {
   /// an inset viewport for positioning calculations.
   final EdgeInsets padding;
 
+  /// The desired placement of the overlay relative to the child.
+  final Placement placement;
+
   /// Creates a copy of this config with the given fields replaced.
   PositioningConfig copyWith({
     Offset? childPosition,
@@ -122,6 +126,7 @@ class PositioningConfig {
     double? overlayWidth,
     AvailableSpaces? explicitSpaces,
     EdgeInsets? padding,
+    Placement? placement,
   }) {
     return PositioningConfig(
       childPosition: childPosition ?? this.childPosition,
@@ -131,6 +136,7 @@ class PositioningConfig {
       overlayWidth: overlayWidth ?? this.overlayWidth,
       explicitSpaces: explicitSpaces ?? this.explicitSpaces,
       padding: padding ?? this.padding,
+      placement: placement ?? this.placement,
     );
   }
 
@@ -186,15 +192,15 @@ class PositionState {
   const PositionState({
     required this.anchorPoints,
     required this.config,
+    this.metadata = const PositionMetadata(),
   });
 
   /// Creates an initial [PositionState] from a [Placement] and [PositioningConfig].
-  factory PositionState.fromPlacement(
-    Placement placement,
+  factory PositionState.fromConfig(
     PositioningConfig config,
   ) {
     return PositionState(
-      anchorPoints: placement.toAnchorPoints(),
+      anchorPoints: config.placement.toAnchorPoints(),
       config: config,
     );
   }
@@ -205,14 +211,19 @@ class PositionState {
   /// The positioning configuration containing geometric constraints.
   final PositioningConfig config;
 
+  /// Metadata produced by middleware during positioning.
+  final PositionMetadata metadata;
+
   /// Creates a copy of this state with the given fields replaced.
   PositionState copyWith({
     AnchorPoints? anchorPoints,
     PositioningConfig? config,
+    PositionMetadata? metadata,
   }) {
     return PositionState(
       anchorPoints: anchorPoints ?? this.anchorPoints,
       config: config ?? this.config,
+      metadata: metadata ?? this.metadata,
     );
   }
 }
@@ -244,7 +255,7 @@ class PositionMetadata {
 
   /// Creates a new [PositionMetadata] with additional data.
   PositionMetadata withData<T>(T value) {
-    return PositionMetadata({..._data, T: value});
+    return PositionMetadata({..._data, value.runtimeType: value});
   }
 
   @override
@@ -341,26 +352,25 @@ class PositioningPipeline {
   /// Returns a [PositionResult] containing both the final position state
   /// and metadata produced by all middleware.
   PositionResult run({
-    required Placement placement,
     required PositioningConfig config,
   }) {
-    var state = PositionState.fromPlacement(placement, config);
-    final allData = <Type, Object?>{};
+    var state = PositionState.fromConfig(config);
 
     for (final middleware in middlewares) {
       final (newState, data) = middleware.run(state);
 
-      // Collect data by its runtime type
       if (data != null) {
-        allData[data.runtimeType] = data;
+        state = newState.copyWith(
+          metadata: newState.metadata.withData(data),
+        );
+      } else {
+        state = newState;
       }
-
-      state = newState;
     }
 
     return PositionResult(
       state: state,
-      metadata: PositionMetadata(allData),
+      metadata: state.metadata,
     );
   }
 }

@@ -96,10 +96,10 @@ AnchorMiddlewares(
     OffsetMiddleware(mainAxis: 10),
 
     // 2. If it overflows, try the opposite side
-    FlipMiddleware(preferredDirection: AxisDirection.up),
+    FlipMiddleware(),
 
     // 3. If it still overflows (e.g., on the sides), shift it
-    ShiftMiddleware(preferredDirection: AxisDirection.up),
+    ShiftMiddleware(),
   ],
   child: RawAnchor(
     // A controller to manage the overlay state
@@ -121,6 +121,34 @@ AnchorMiddlewares(
     ),
   ),
 )
+```
+
+#### Avoiding Keyboard and System UI
+
+When using `Anchor` with text fields, you'll often want the overlay to avoid the on-screen keyboard and system UI elements (status bar, navigation bar). Use the `viewPadding` parameter to define safe areas.
+
+**Important:** Due to how Flutter's `OverlayPortal` works, overlays are rendered in a separate layer that doesn't receive keyboard insets from `MediaQuery`. You must read these values **before** the overlay layer and pass them explicitly.
+
+```dart
+@override
+Widget build(BuildContext context) {
+  // Read MediaQuery values at the Scaffold level (before entering OverlayPortal)
+  final viewPadding = MediaQuery.viewPaddingOf(context);
+  final viewInsets = MediaQuery.viewInsetsOf(context);
+
+  // Combine both to avoid system UI AND keyboard
+  final padding = viewPadding + viewInsets;
+
+  return Scaffold(
+    body: Center(
+      child: Anchor(
+        // Pass the padding to keep overlay away from edges and keyboard
+        viewPadding: padding,
+        overlayBuilder: (context) => _buildOverlayContent(),
+      ),
+    ),
+  );
+}
 ```
 
 ### Backdrop

@@ -47,32 +47,33 @@ class _SearchDemoState extends State<SearchDemo> {
 
   @override
   Widget build(BuildContext context) {
+    final viewPadding = MediaQuery.viewPaddingOf(context);
+    final viewInsets = MediaQuery.viewInsetsOf(context);
+    final padding = viewPadding + viewInsets;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Search Demo')),
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              _SearchAnchor(
-                suggestions: _suggestions,
-                controller: _searchController,
-                focusNode: _focusNode,
-                hintText: 'Search fruits...',
-                width: 300,
-                height: 200,
-              ),
-              const Spacer(),
-              _SearchAnchor(
-                suggestions: _countries,
-                controller: _searchController2,
-                focusNode: _focusNode2,
-                hintText: 'Search countries...',
-                width: 300,
-                height: 200,
-              ),
-            ],
-          ),
+        child: Column(
+          children: [
+            _SearchAnchor(
+              suggestions: _suggestions,
+              controller: _searchController,
+              focusNode: _focusNode,
+              hintText: 'Search fruits...',
+              spacing: 8,
+              viewPadding: padding,
+            ),
+            const Spacer(),
+            _SearchAnchor(
+              suggestions: _countries,
+              controller: _searchController2,
+              focusNode: _focusNode2,
+              hintText: 'Search countries...',
+              spacing: -8,
+              viewPadding: padding,
+            ),
+          ],
         ),
       ),
     );
@@ -85,15 +86,15 @@ class _SearchAnchor extends StatefulWidget {
     required this.controller,
     required this.focusNode,
     required this.hintText,
-    required this.width,
-    required this.height,
+    required this.spacing,
+    required this.viewPadding,
   });
   final List<String> suggestions;
   final TextEditingController controller;
   final FocusNode focusNode;
   final String hintText;
-  final double width;
-  final double height;
+  final double spacing;
+  final EdgeInsets viewPadding;
 
   @override
   State<_SearchAnchor> createState() => _SearchAnchorState();
@@ -140,16 +141,16 @@ class _SearchAnchorState extends State<_SearchAnchor> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: widget.width,
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 350),
       child: Anchor(
+        viewPadding: widget.viewPadding,
         triggerMode: AnchorTriggerMode.focus(focusNode: widget.focusNode),
         placement: Placement.bottom,
-        overlayWidth: widget.width,
-        overlayHeight: widget.height,
+        spacing: widget.spacing,
         overlayBuilder: (context) {
           return Container(
-            width: widget.width,
+            width: AnchorData.maybeOf(context)?.geometry.childBounds?.width,
             constraints: const BoxConstraints(maxHeight: 200),
             decoration: BoxDecoration(
               color: Colors.white,

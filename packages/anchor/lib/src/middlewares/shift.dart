@@ -40,28 +40,13 @@ class ShiftData {
 @immutable
 class ShiftMiddleware implements PositioningMiddleware<ShiftData> {
   /// Creates a [ShiftMiddleware].
-  const ShiftMiddleware({
-    required this.preferredDirection,
-  });
-
-  /// The preferred [AxisDirection] to determine which cross-axis to shift.
-  /// This is typically derived from the initial [Placement].
-  final AxisDirection preferredDirection;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ShiftMiddleware &&
-          runtimeType == other.runtimeType &&
-          preferredDirection == other.preferredDirection;
-
-  @override
-  int get hashCode => preferredDirection.hashCode;
+  const ShiftMiddleware();
 
   @override
   (PositionState, ShiftData?) run(PositionState state) {
     final config = state.config;
     final originalOffset = state.anchorPoints.offset;
+    final preferredDirection = config.placement.direction;
 
     final anchors = switch (preferredDirection) {
       // Vertical placements (above/below) → shift horizontally (cross-axis)

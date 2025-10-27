@@ -319,25 +319,15 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
   }
 
   List<PositioningMiddleware> _buildMiddlewares(BuildContext context) {
-    final placement = widget.placement ?? Placement.top;
     final enableFlip = widget.enableFlip ?? true;
     final enableShift = widget.enableShift ?? true;
     final spacing = widget.spacing ?? 4;
 
-    return switch (AnchorMiddlewares.maybeOf(context)) {
-      null => [
-          OffsetMiddleware(mainAxis: OffsetValue.value(spacing)),
-          if (enableFlip)
-            FlipMiddleware(
-              preferredDirection: placement.direction,
-            ),
-          if (enableShift)
-            ShiftMiddleware(
-              preferredDirection: placement.direction,
-            ),
-        ],
-      final middlewares => middlewares,
-    };
+    return [
+      OffsetMiddleware(mainAxis: OffsetValue.value(spacing)),
+      if (enableFlip) const FlipMiddleware(),
+      if (enableShift) const ShiftMiddleware(),
+    ];
   }
 
   @override

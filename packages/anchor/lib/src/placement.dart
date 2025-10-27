@@ -69,6 +69,32 @@ enum Placement {
   bool get isHorizontal =>
       direction == AxisDirection.left || direction == AxisDirection.right;
 
+  /// Returns a new placement with the opposite direction on the same axis,
+  /// preserving the alignment.
+  ///
+  /// Examples:
+  /// - `Placement.top` → `Placement.bottom`
+  /// - `Placement.topStart` → `Placement.bottomStart`
+  /// - `Placement.leftEnd` → `Placement.rightEnd`
+  Placement flip() {
+    return switch (this) {
+      // Top ↔ Bottom
+      Placement.top => Placement.bottom,
+      Placement.topStart => Placement.bottomStart,
+      Placement.topEnd => Placement.bottomEnd,
+      Placement.bottom => Placement.top,
+      Placement.bottomStart => Placement.topStart,
+      Placement.bottomEnd => Placement.topEnd,
+      // Left ↔ Right
+      Placement.left => Placement.right,
+      Placement.leftStart => Placement.rightStart,
+      Placement.leftEnd => Placement.rightEnd,
+      Placement.right => Placement.left,
+      Placement.rightStart => Placement.leftStart,
+      Placement.rightEnd => Placement.leftEnd,
+    };
+  }
+
   /// Returns the initial anchor points for this placement.
   AnchorPoints toAnchorPoints() {
     return switch (this) {

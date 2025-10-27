@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_anchor/flutter_anchor.dart';
 
 import 'arrow/arrows.dart';
-import 'popover.dart';
+import 'arrow/container.dart';
 
 /// Creates an anchor overlay styled as a tooltip.
 class AnchorTooltip extends StatelessWidget {
@@ -16,32 +16,72 @@ class AnchorTooltip extends StatelessWidget {
     this.offset,
     this.viewPadding,
     this.triggerMode,
-    this.backgroundColor,
-    this.padding,
-    this.borderRadius,
-    this.arrowSize,
-    this.arrowAlignment,
-    this.arrowShape,
     this.placement,
-    this.scrollBehavior,
     this.transitionDuration,
     this.transitionBuilder,
-    this.backdropBuilder,
-    this.boxShadow,
-    this.border,
     this.showDuration,
     this.onShow,
     this.onHide,
     this.enabled,
-    required this.message,
+    required this.content,
     required this.child,
   });
+
+  /// Creates an anchor tooltip with an arrow.
+  static Widget arrow({
+    Key? key,
+    AnchorController? controller,
+    double? spacing,
+    Offset? offset,
+    EdgeInsets? viewPadding,
+    AnchorTriggerMode? triggerMode,
+    Color? backgroundColor,
+    BorderRadius? borderRadius,
+    Size? arrowSize,
+    ArrowShape? arrowShape,
+    Placement? placement,
+    Duration? transitionDuration,
+    AnimatedTransitionBuilder? transitionBuilder,
+    List<BoxShadow>? boxShadow,
+    BorderSide? border,
+    Duration? showDuration,
+    VoidCallback? onShow,
+    VoidCallback? onHide,
+    bool? enabled,
+    required Widget content,
+    required Widget child,
+  }) {
+    return Anchor(
+      key: key,
+      controller: controller,
+      spacing: spacing,
+      offset: offset,
+      viewPadding: viewPadding,
+      triggerMode: triggerMode,
+      placement: placement,
+      transitionDuration: transitionDuration,
+      transitionBuilder: transitionBuilder,
+      onShow: onShow,
+      onHide: onHide,
+      enabled: enabled,
+      overlayBuilder: (context) => AnchorArrowContainer(
+        backgroundColor: backgroundColor,
+        borderRadius: borderRadius,
+        arrowShape: arrowShape,
+        arrowSize: arrowSize,
+        border: border,
+        boxShadow: boxShadow,
+        child: content,
+      ),
+      child: child,
+    );
+  }
 
   /// The widget that the overlay is anchored to.
   final Widget child;
 
-  /// The tooltip message to display.
-  final Widget message;
+  /// The tooltip content to display.
+  final Widget content;
 
   /// {@macro anchor_controller}
   final AnchorController? controller;
@@ -58,44 +98,14 @@ class AnchorTooltip extends StatelessWidget {
   /// {@macro anchor_trigger_mode}
   final AnchorTriggerMode? triggerMode;
 
-  /// The background color of the tooltip overlay.
-  final Color? backgroundColor;
-
-  /// The padding inside the tooltip overlay.
-  final EdgeInsets? padding;
-
-  /// The border radius of the tooltip overlay.
-  final BorderRadius? borderRadius;
-
-  /// The size of the arrow for the tooltip overlay.
-  final Size? arrowSize;
-
-  /// The alignment of the arrow for the tooltip overlay.
-  final double? arrowAlignment;
-
-  /// The shape of the arrow for the tooltip overlay.
-  final ArrowShape? arrowShape;
-
   /// {@macro anchor_placement}
   final Placement? placement;
-
-  /// {@macro anchor_scroll_behavior}
-  final AnchorScrollBehavior? scrollBehavior;
 
   /// {@macro anchor_transition_duration}
   final Duration? transitionDuration;
 
   /// {@macro anchor_transition_builder}
   final AnimatedTransitionBuilder? transitionBuilder;
-
-  /// {@macro anchor_backdrop_builder}
-  final WidgetBuilder? backdropBuilder;
-
-  /// The box shadow(s) for the tooltip overlay.
-  final List<BoxShadow>? boxShadow;
-
-  /// The border for the tooltip overlay.
-  final BorderSide? border;
 
   /// Duration to show the tooltip before auto-dismissing.
   final Duration? showDuration;
@@ -111,34 +121,21 @@ class AnchorTooltip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectivePadding =
-        padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
     return AnchorConfig(
       enableOverlayHover: false,
-      child: AnchorPopover(
+      child: Anchor(
         viewPadding: viewPadding,
         overlayBuilder: (context) => _TooltipAutoDismiss(
           showDuration: showDuration,
-          child: Padding(
-            padding: effectivePadding,
-            child: message,
-          ),
+          child: content,
         ),
         controller: controller,
         spacing: spacing,
         offset: offset,
         triggerMode: triggerMode ?? const AnchorTriggerMode.hover(),
-        backgroundColor: backgroundColor,
-        borderRadius: borderRadius,
-        arrowSize: arrowSize,
-        arrowShape: arrowShape,
         placement: placement,
-        scrollBehavior: scrollBehavior,
         transitionDuration: transitionDuration,
         transitionBuilder: transitionBuilder,
-        backdropBuilder: backdropBuilder,
-        boxShadow: boxShadow,
-        border: border,
         onShow: onShow,
         onHide: onHide,
         enabled: enabled,

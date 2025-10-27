@@ -259,8 +259,8 @@ class _AnchorContextMenuState extends State<AnchorContextMenu> {
           return AnchorMiddlewares(
             middlewares: [
               if (ref != null) VirtualReferenceMiddleware(ref),
-              const FlipMiddleware(preferredDirection: AxisDirection.down),
-              const ShiftMiddleware(preferredDirection: AxisDirection.down),
+              const FlipMiddleware(),
+              const ShiftMiddleware(),
             ],
             child: RawAnchor(
               controller: _anchorController,

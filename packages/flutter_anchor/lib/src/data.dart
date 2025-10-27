@@ -36,6 +36,7 @@ class AnchorData extends InheritedWidget {
   const AnchorData({
     super.key,
     required this.controller,
+    required this.points,
     required this.geometry,
     required this.metadata,
     required super.child,
@@ -49,6 +50,9 @@ class AnchorData extends InheritedWidget {
 
   /// The metadata produced by positioning middleware.
   final PositionMetadata metadata;
+
+  /// The calculated anchor points for the overlay.
+  final AnchorPoints points;
 
   /// Retrieves the [AnchorController] from the nearest [AnchorData] ancestor.
   ///

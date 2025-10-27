@@ -31,23 +31,29 @@ This will also install its peers, `flutter_anchor` and `anchor`.
 
 ### 1. Simple Tooltip (`AnchorTooltip`)
 
-The easiest way to get started is to wrap your widget with `AnchorTooltip`. It provides sensible defaults, including a hover trigger.
+The easiest way to get started is to wrap your widget with `AnchorTooltip`. 
 
 ```dart
 AnchorTooltip(
-  message: const Text(
-    'This is a simple tooltip',
-    style: TextStyle(color: Colors.white),
+  content: Container(
+    padding: const EdgeInsets.all(4),
+    decoration: BoxDecoration(
+      color: Colors.black87,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: const Text(
+      'This is a simple tooltip',
+      style: TextStyle(color: Colors.white),
+    ),
   ),
-  backgroundColor: Colors.grey[800],
-  arrowShape: const RoundedArrow(),
+  waitDuration: const Duration(milliseconds: 300),
   child: const Icon(Icons.info),
 )
 ```
 
 ### 2. Styled Popover (`AnchorPopover`)
 
-For more complex content, use `AnchorPopover`. It provides a styled container with an arrow, border, and background color.
+For more complex content that user could interact with, use `AnchorPopover`.
 
 ```dart
 AnchorPopover(

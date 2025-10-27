@@ -21,6 +21,7 @@ void _basicExample() {
     viewportSize: Size(800, 600),
     overlayHeight: 20,
     overlayWidth: 20,
+    placement: Placement.top,
   );
 
   // 2. Define the positioning logic
@@ -33,7 +34,6 @@ void _basicExample() {
 
   // 3. Run the calculation
   final result = pipeline.run(
-    placement: Placement.top,
     config: config,
   );
 
@@ -62,19 +62,17 @@ void _metadataExample() {
     viewportSize: Size(800, 600),
     overlayHeight: 100,
     overlayWidth: 150,
+    placement: Placement.top,
   );
 
   const pipeline = PositioningPipeline(
     middlewares: [
-      FlipMiddleware(preferredDirection: AxisDirection.up),
-      ShiftMiddleware(preferredDirection: AxisDirection.up),
+      FlipMiddleware(),
+      ShiftMiddleware(),
     ],
   );
 
-  final result = pipeline.run(
-    placement: Placement.top,
-    config: config,
-  );
+  final result = pipeline.run(config: config);
 
   // Access middleware metadata
   final flipData = result.metadata.get<FlipData>();

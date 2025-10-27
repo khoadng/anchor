@@ -171,6 +171,19 @@ class _RawAnchorState extends State<RawAnchor> {
   Size? _measuredOverlaySize;
 
   List<PositioningMiddleware>? _lastMiddlewares;
+  PositioningPipeline? _lastPipeline;
+
+  var _points = const AnchorPoints(
+    childAnchor: Alignment.topLeft,
+    overlayAnchor: Alignment.bottomLeft,
+  );
+  var _geometry = const AnchorGeometry(
+    overlayBounds: null,
+    childBounds: null,
+    direction: AxisDirection.down,
+    alignment: Alignment.topLeft,
+  );
+  var _metadata = const PositionMetadata();
 
   bool get _isWaitingForMeasurement {
     final needsWidth = widget.overlayWidth == null;
@@ -210,19 +223,25 @@ class _RawAnchorState extends State<RawAnchor> {
     // reasons like MediaQuery or Scrollable changes, so we verify here)
     final middlewaresChanged = !identical(_lastMiddlewares, currentMiddlewares);
 
-    if (_lastScreenSize != currentSize && _overlayController.isShowing) {
+    if (_lastScreenSize != currentSize) {
       _lastScreenSize = currentSize;
-      _calculateAnchorPoints(notify: false);
-    } else {
-      _lastScreenSize = currentSize;
+
+      if (_overlayController.isShowing) {
+        _calculateAnchorPoints(notify: false);
+      }
     }
 
-    // Recalculate if middlewares changed and overlay is showing
-    if (middlewaresChanged && _overlayController.isShowing) {
+    // Recalculate if middlewares changed
+    if (middlewaresChanged) {
       _lastMiddlewares = currentMiddlewares;
-      _calculateAnchorPoints(notify: false);
-    } else {
-      _lastMiddlewares = currentMiddlewares;
+
+      _lastPipeline = PositioningPipeline(
+        middlewares: _lastMiddlewares!,
+      );
+
+      if (_overlayController.isShowing) {
+        _calculateAnchorPoints(notify: false);
+      }
     }
 
     if (widget.scrollBehavior != AnchorScrollBehavior.none) {
@@ -243,6 +262,16 @@ class _RawAnchorState extends State<RawAnchor> {
     _controller.removeListener(_handleControllerChange);
     _scrollPosition?.removeListener(_handleScroll);
     super.dispose();
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _overlayController.isShowing) {
+        _calculateAnchorPoints();
+      }
+    });
   }
 
   void _handleControllerChange() {
@@ -322,15 +351,14 @@ class _RawAnchorState extends State<RawAnchor> {
       overlayHeight: effectiveOverlayHeight,
       overlayWidth: effectiveOverlayWidth,
       padding: widget.viewPadding ?? EdgeInsets.zero,
+      placement: widget.placement,
     );
 
-    final middlewares = _lastMiddlewares ?? AnchorMiddlewares.of(context);
-    final result = PositioningPipeline(
-      middlewares: middlewares,
-    ).run(
-      placement: widget.placement,
-      config: config,
-    );
+    final pipeline = _lastPipeline;
+
+    if (pipeline == null) return;
+
+    final result = pipeline.run(config: config);
 
     var newPoints = result.state.anchorPoints;
 
@@ -349,12 +377,21 @@ class _RawAnchorState extends State<RawAnchor> {
       overlayHeight: effectiveOverlayHeight,
     );
 
-    _controller.setData(
-      newPoints,
-      geometry,
-      result.metadata,
-      notify: notify,
-    );
+    if (_points != newPoints ||
+        _geometry != geometry ||
+        _metadata != result.metadata) {
+      if (notify) {
+        setState(() {
+          _points = newPoints;
+          _geometry = geometry;
+          _metadata = result.metadata;
+        });
+      } else {
+        _points = newPoints;
+        _geometry = geometry;
+        _metadata = result.metadata;
+      }
+    }
   }
 
   void _handleScroll() {
@@ -393,45 +430,39 @@ class _RawAnchorState extends State<RawAnchor> {
     return OverlayPortal(
       controller: _overlayController,
       overlayChildBuilder: (context) {
-        return ListenableBuilder(
-          listenable: _controller,
-          builder: (context, _) {
-            final points = _controller.points;
-            final geometry = _controller.geometry;
-            final offset = points.offset;
-
-            return AnchorData(
-              controller: _controller,
-              geometry: geometry,
-              metadata: _controller.metadata,
-              child: Stack(
-                children: [
-                  if (widget.backdropBuilder case final builder?)
-                    Positioned.fill(
+        return AnchorData(
+          controller: _controller,
+          geometry: _geometry,
+          metadata: _metadata,
+          points: _points,
+          child: Stack(
+            children: [
+              if (widget.backdropBuilder case final builder?)
+                Positioned.fill(
+                  child: Builder(
+                    builder: builder,
+                  ),
+                ),
+              CompositedTransformFollower(
+                link: _layerLink,
+                targetAnchor: _points.childAnchor,
+                followerAnchor: _points.overlayAnchor,
+                offset: _points.offset,
+                child: Align(
+                  alignment: _points.overlayAlignment,
+                  child: Opacity(
+                    opacity: _isWaitingForMeasurement ? 0.0 : 1.0,
+                    child: _MeasureSize(
+                      onChange: _handleOverlaySizeMeasured,
                       child: Builder(
-                        builder: builder,
-                      ),
-                    ),
-                  CompositedTransformFollower(
-                    link: _layerLink,
-                    targetAnchor: points.childAnchor,
-                    followerAnchor: points.overlayAnchor,
-                    offset: offset,
-                    child: Align(
-                      alignment: points.overlayAlignment,
-                      child: Opacity(
-                        opacity: _isWaitingForMeasurement ? 0.0 : 1.0,
-                        child: _MeasureSize(
-                          onChange: _handleOverlaySizeMeasured,
-                          child: widget.overlayBuilder(context),
-                        ),
+                        builder: widget.overlayBuilder,
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
-            );
-          },
+            ],
+          ),
         );
       },
       child: CompositedTransformTarget(

@@ -61,10 +61,11 @@ class _CursorFollowDemoState extends State<CursorFollowDemo> {
             middlewares: [
               if (_cursorReference != null)
                 VirtualReferenceMiddleware(_cursorReference!),
-              const FlipMiddleware(preferredDirection: AxisDirection.right),
-              const ShiftMiddleware(preferredDirection: AxisDirection.right),
+              const FlipMiddleware(),
+              const ShiftMiddleware(),
             ],
             child: RawAnchor(
+              viewPadding: MediaQuery.viewPaddingOf(context),
               controller: _anchorController,
               placement: Placement.rightStart,
               overlayBuilder: (context) {
