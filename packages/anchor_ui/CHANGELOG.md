@@ -1,3 +1,6 @@
+## 0.0.7
+* Update dependencies
+
 ## 0.0.4
 
 * Add viewPadding
