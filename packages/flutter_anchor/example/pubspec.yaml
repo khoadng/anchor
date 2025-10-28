@@ -12,6 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_anchor:
+  anchor_ui:
 
 
 dev_dependencies:

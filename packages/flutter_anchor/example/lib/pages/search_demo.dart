@@ -1,5 +1,5 @@
+import 'package:anchor_ui/anchor_ui.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_anchor/flutter_anchor.dart';
 
 class SearchDemo extends StatefulWidget {
   const SearchDemo({super.key});
@@ -9,11 +9,6 @@ class SearchDemo extends StatefulWidget {
 }
 
 class _SearchDemoState extends State<SearchDemo> {
-  final _focusNode = FocusNode();
-  final _focusNode2 = FocusNode();
-  final _searchController = TextEditingController();
-  final _searchController2 = TextEditingController();
-
   final _suggestions = [
     'Apple',
     'Banana',
@@ -37,15 +32,6 @@ class _SearchDemoState extends State<SearchDemo> {
   ];
 
   @override
-  void dispose() {
-    _focusNode.dispose();
-    _focusNode2.dispose();
-    _searchController.dispose();
-    _searchController2.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final viewPadding = MediaQuery.viewPaddingOf(context);
     final viewInsets = MediaQuery.viewInsetsOf(context);
@@ -58,8 +44,6 @@ class _SearchDemoState extends State<SearchDemo> {
           children: [
             _SearchAnchor(
               suggestions: _suggestions,
-              controller: _searchController,
-              focusNode: _focusNode,
               hintText: 'Search fruits...',
               spacing: 8,
               viewPadding: padding,
@@ -67,8 +51,6 @@ class _SearchDemoState extends State<SearchDemo> {
             const Spacer(),
             _SearchAnchor(
               suggestions: _countries,
-              controller: _searchController2,
-              focusNode: _focusNode2,
               hintText: 'Search countries...',
               spacing: -8,
               viewPadding: padding,
@@ -83,15 +65,11 @@ class _SearchDemoState extends State<SearchDemo> {
 class _SearchAnchor extends StatefulWidget {
   const _SearchAnchor({
     required this.suggestions,
-    required this.controller,
-    required this.focusNode,
     required this.hintText,
     required this.spacing,
     required this.viewPadding,
   });
   final List<String> suggestions;
-  final TextEditingController controller;
-  final FocusNode focusNode;
   final String hintText;
   final double spacing;
   final EdgeInsets viewPadding;
@@ -101,13 +79,21 @@ class _SearchAnchor extends StatefulWidget {
 }
 
 class _SearchAnchorState extends State<_SearchAnchor> {
+  final _controller = TextEditingController();
   late List<String> _filtered;
+  void _filter() {
+    final query = _controller.text.toLowerCase();
+    setState(() {
+      _filtered = widget.suggestions
+          .where((item) => item.toLowerCase().contains(query))
+          .toList();
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     _filtered = widget.suggestions;
-    widget.controller.addListener(_filter);
   }
 
   @override
@@ -121,34 +107,20 @@ class _SearchAnchorState extends State<_SearchAnchor> {
 
   @override
   void dispose() {
-    widget.controller.removeListener(_filter);
+    _controller.dispose();
     super.dispose();
-  }
-
-  void _filter() {
-    final query = widget.controller.text.toLowerCase();
-    setState(() {
-      _filtered = widget.suggestions
-          .where((item) => item.toLowerCase().contains(query))
-          .toList();
-    });
-  }
-
-  void _select(String suggestion) {
-    widget.controller.text = suggestion;
-    widget.focusNode.unfocus();
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       constraints: const BoxConstraints(maxWidth: 350),
-      child: Anchor(
+      child: AnchorAutocomplete(
+        controller: _controller,
         viewPadding: widget.viewPadding,
-        triggerMode: AnchorTriggerMode.focus(focusNode: widget.focusNode),
         placement: Placement.bottom,
         spacing: widget.spacing,
-        overlayBuilder: (context) {
+        overlayBuilder: (context, _, focusNode) {
           return Container(
             width: AnchorData.maybeOf(context)?.geometry.childBounds?.width,
             constraints: const BoxConstraints(maxHeight: 200),
@@ -172,7 +144,10 @@ class _SearchAnchorState extends State<_SearchAnchor> {
                     itemBuilder: (context, index) {
                       final suggestion = _filtered[index];
                       return InkWell(
-                        onTap: () => _select(suggestion),
+                        onTap: () {
+                          _controller.text = suggestion;
+                          focusNode.unfocus();
+                        },
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -185,15 +160,18 @@ class _SearchAnchorState extends State<_SearchAnchor> {
                   ),
           );
         },
-        child: TextField(
-          controller: widget.controller,
-          focusNode: widget.focusNode,
-          decoration: InputDecoration(
-            hintText: widget.hintText,
-            prefixIcon: const Icon(Icons.search),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-        ),
+        childBuilder: (context, _, focusNode) {
+          return TextField(
+            controller: _controller,
+            focusNode: focusNode,
+            decoration: InputDecoration(
+              hintText: widget.hintText,
+              prefixIcon: const Icon(Icons.search),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+        },
       ),
     );
   }
