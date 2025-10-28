@@ -13,28 +13,6 @@ class AnchorPoints {
     this.offset = Offset.zero,
   }) : overlayAlignment = overlayAlignment ?? overlayAnchor;
 
-  /// Creates anchor points based on a raw direction.
-  factory AnchorPoints.raw(AxisDirection direction) {
-    return switch (direction) {
-      AxisDirection.up => const AnchorPoints(
-          childAnchor: Alignment.topCenter,
-          overlayAnchor: Alignment.bottomCenter,
-        ),
-      AxisDirection.down => const AnchorPoints(
-          childAnchor: Alignment.bottomCenter,
-          overlayAnchor: Alignment.topCenter,
-        ),
-      AxisDirection.left => const AnchorPoints(
-          childAnchor: Alignment.centerLeft,
-          overlayAnchor: Alignment.centerRight,
-        ),
-      AxisDirection.right => const AnchorPoints(
-          childAnchor: Alignment.centerRight,
-          overlayAnchor: Alignment.centerLeft,
-        ),
-    };
-  }
-
   /// Creates a copy of this AnchorPoints with the given fields replaced
   /// by new values.
   AnchorPoints copyWith({

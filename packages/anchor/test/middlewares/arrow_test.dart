@@ -2,8 +2,9 @@ import 'package:anchor/anchor.dart';
 import 'package:flutter/rendering.dart';
 import 'package:test/test.dart';
 
+import '../utils.dart';
+
 void main() {
-  const viewportSize = Size(800, 600);
   const overlaySize = Size(100, 100);
   const childSize = Size(50, 50);
   const arrowSize = Size(20, 20);
@@ -17,7 +18,7 @@ void main() {
     placement: Placement.top,
   );
 
-  group('ArrowMiddleware', () {
+  group('Arrow', () {
     test('calculates x position for vertical placement', () {
       const middleware = ArrowMiddleware(arrowSize: arrowSize);
       final state = PositionState.fromConfig(defaultConfig);

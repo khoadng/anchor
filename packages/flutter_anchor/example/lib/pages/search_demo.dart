@@ -61,7 +61,6 @@ class _SearchDemoState extends State<SearchDemo> {
               controller: _searchController,
               focusNode: _focusNode,
               hintText: 'Search fruits...',
-              spacing: 8,
               viewPadding: padding,
             ),
             const Spacer(),
@@ -70,7 +69,6 @@ class _SearchDemoState extends State<SearchDemo> {
               controller: _searchController2,
               focusNode: _focusNode2,
               hintText: 'Search countries...',
-              spacing: -8,
               viewPadding: padding,
             ),
           ],
@@ -86,14 +84,12 @@ class _SearchAnchor extends StatefulWidget {
     required this.controller,
     required this.focusNode,
     required this.hintText,
-    required this.spacing,
     required this.viewPadding,
   });
   final List<String> suggestions;
   final TextEditingController controller;
   final FocusNode focusNode;
   final String hintText;
-  final double spacing;
   final EdgeInsets viewPadding;
 
   @override
@@ -147,7 +143,7 @@ class _SearchAnchorState extends State<_SearchAnchor> {
         viewPadding: widget.viewPadding,
         triggerMode: AnchorTriggerMode.focus(focusNode: widget.focusNode),
         placement: Placement.bottom,
-        spacing: widget.spacing,
+        spacing: 8,
         overlayBuilder: (context) {
           return Container(
             width: AnchorData.maybeOf(context)?.geometry.childBounds?.width,
