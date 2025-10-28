@@ -140,14 +140,16 @@ void main() {
           childPosition: childAtTopEdge(childSize),
           placement: Placement.top,
           offset: 50.0,
-          checkOffset: (PositionState state) => state.anchorPoints.offset.dy == 50.0,
+          checkOffset: (PositionState state) =>
+              state.anchorPoints.offset.dy == 50.0,
         ),
         (
           description: 'maintains spacing after horizontal flip',
           childPosition: childAtLeftEdge(childSize),
           placement: Placement.left,
           offset: 30.0,
-          checkOffset: (PositionState state) => state.anchorPoints.offset.dx == 30.0,
+          checkOffset: (PositionState state) =>
+              state.anchorPoints.offset.dx == 30.0,
         ),
       ];
 
