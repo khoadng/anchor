@@ -18,6 +18,26 @@ Its core positioning engine is inspired by the powerful JavaScript library [Floa
 
 -----
 
+
+## Which Package Should I Use?
+
+You should import the package that matches your needs:
+
+  * **For common UI behaviors (Tooltips, Popovers, Context Menus):**
+    Start with **`anchor_ui`**. This package is headless but provides convenient, easy-to-use abstractions for common UI patterns like `AnchorTooltip` and `AnchorPopover`. Use this if you want the behavior for these components without building the interaction logic from scratch.
+
+  * **For custom UIs (Search suggestions, Menus):**
+    Use **`flutter_anchor`**. This package provides the main widgets for connecting an overlay to a child.
+
+      * **`Anchor`**: A high-level widget built on `RawAnchor` that includes built-in trigger logic (tap, hover, focus, manual), animations, and default middlewares. This is the best choice for most custom UIs.
+
+      * **`RawAnchor`**: A low-level widget that only handles positioning. Use this when `Anchor` is not flexible enough and you need full, manual control over the overlay state and complex positioning logic.
+
+  * **For the positioning engine only:**
+    Use **`anchor`**. This is the minimal Flutter package that provides *only* the core positioning engine. You should use this if you are building your own overlay and layout widgets from scratch and just need the raw `PositioningPipeline` and middleware to perform the position calculations.
+
 ## Contributing
 
 Contributions are welcome! This is a monorepo. Feel free to open issues or submit pull requests on GitHub.
+
+

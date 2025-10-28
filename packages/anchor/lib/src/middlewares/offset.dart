@@ -78,6 +78,15 @@ class OffsetValue {
 
   @override
   int get hashCode => Object.hash(_value, _callback);
+
+  @override
+  String toString() {
+    if (_callback != null) {
+      return 'Value(compute)';
+    }
+
+    return 'Value($_value)';
+  }
 }
 
 /// A middleware that applies a positional offset to the overlay.
@@ -113,7 +122,7 @@ class OffsetMiddleware implements PositioningMiddleware<OffsetData> {
   int get hashCode => Object.hash(mainAxis, crossAxis);
 
   @override
-  String toString() => 'OffsetMiddleware(mainAxis: $mainAxis, crossAxis: $crossAxis)';
+  String toString() => 'Offset(mainAxis: $mainAxis, crossAxis: $crossAxis)';
 
   @override
   (PositionState, OffsetData?) run(PositionState state) {

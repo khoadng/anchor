@@ -174,6 +174,18 @@ Anchor(
 )
 ```
 
+## Limitations
+
+Due to how this package works, there are some limitations to be aware of:
+
+- **Overlay Size Measurement**: By default, the engine measures the overlay size *after* it is built. This means that the first time an overlay appears, there will be a frame where the overlay is invisible (using `Opacity(opacity: 0)`) until its size is measured and positioning is calculated. This can cause a slight flicker/delay when the overlay first appears. 
+  - This only becomes a problem when you want to show your overlay immeditely. To mitigate this, you can 
+    - Provide the size of the overlay in advance using the `overlayWidth` and `overlayHeight` parameters on `Anchor`/`RawAnchor`.
+    - Use animated transition (like `FadeTransition`) to smooth out the appearance 
+
+- **Size Middleware**: Using `SizeMiddleware` will causes engine to rerun on every build, which may lead to performance issues. So only use it when you really need dynamic sizing based on available space.
+
+
 ## Demos
 
 

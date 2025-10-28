@@ -87,8 +87,7 @@ class ArrowMiddleware implements PositioningMiddleware<ArrowData> {
   int get hashCode => Object.hash(arrowSize, padding);
 
   @override
-  String toString() =>
-      'ArrowMiddleware(arrowSize: $arrowSize, padding: $padding)';
+  String toString() => 'Arrow(arrowSize: $arrowSize, padding: $padding)';
 
   @override
   (PositionState, ArrowData?) run(PositionState state) {
