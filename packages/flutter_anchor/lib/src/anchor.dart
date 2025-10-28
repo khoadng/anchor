@@ -318,7 +318,6 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
           OffsetMiddleware(mainAxis: OffsetValue.value(widget.spacing ?? 4)),
           const FlipMiddleware(),
           const ShiftMiddleware(),
-          const SizeMiddleware(),
         ],
     };
   }
