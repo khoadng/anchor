@@ -51,11 +51,13 @@ class FlipMiddleware implements PositioningMiddleware<FlipData> {
     final preferredDirection = config.placement.direction;
     final currentAnchors = state.anchorPoints;
     final currentOffset = currentAnchors.offset;
+    final virtualData = state.metadata.get<VirtualReferenceData>();
 
     final preferredFits = _canFitWithOffset(
       config: config,
       direction: preferredDirection,
       offset: currentOffset,
+      isVirtual: virtualData != null,
     );
 
     if (preferredFits) {
@@ -65,7 +67,6 @@ class FlipMiddleware implements PositioningMiddleware<FlipData> {
       );
     }
 
-    final virtualData = state.metadata.get<VirtualReferenceData>();
     final opposite = _flipDirection(preferredDirection);
     final spaces = config.spaces;
 
@@ -73,6 +74,7 @@ class FlipMiddleware implements PositioningMiddleware<FlipData> {
       config: config,
       direction: opposite,
       offset: currentOffset,
+      isVirtual: virtualData != null,
     );
 
     final chosenDirection = switch (oppositeFits) {
@@ -166,24 +168,40 @@ class FlipMiddleware implements PositioningMiddleware<FlipData> {
     required PositioningConfig config,
     required AxisDirection direction,
     required Offset offset,
+    required bool isVirtual,
   }) {
     final availableSpace = config.spaces.inDirection(direction);
 
+    // For virtual references, the available spaces are already calculated
+    // relative to the virtual reference position, and the offset represents
+    // an absolute position from the child origin. We should only check if
+    // the overlay size fits in the available space.
+    //
+    // For non-virtual references, the offset is a relative spacing adjustment,
+    // so we need to account for it when checking if the overlay fits.
     return switch (direction) {
       AxisDirection.up => switch (config.overlayHeight) {
-          final height? => availableSpace >= (height + offset.dy.abs()),
+          final height? => isVirtual
+              ? availableSpace >= height
+              : availableSpace >= (height + offset.dy.abs()),
           null => true,
         },
       AxisDirection.down => switch (config.overlayHeight) {
-          final height? => availableSpace >= (height + offset.dy.abs()),
+          final height? => isVirtual
+              ? availableSpace >= height
+              : availableSpace >= (height + offset.dy.abs()),
           null => true,
         },
       AxisDirection.left => switch (config.overlayWidth) {
-          final width? => availableSpace >= (width + offset.dx.abs()),
+          final width? => isVirtual
+              ? availableSpace >= width
+              : availableSpace >= (width + offset.dx.abs()),
           null => true,
         },
       AxisDirection.right => switch (config.overlayWidth) {
-          final width? => availableSpace >= (width + offset.dx.abs()),
+          final width? => isVirtual
+              ? availableSpace >= width
+              : availableSpace >= (width + offset.dx.abs()),
           null => true,
         },
     };

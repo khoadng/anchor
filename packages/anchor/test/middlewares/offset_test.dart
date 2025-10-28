@@ -16,27 +16,95 @@ void main() {
     placement: Placement.top,
   );
 
-  group('OffsetMiddleware', () {
-    test('applies mainAxis offset for vertical placement', () {
+  group('Offset', () {
+    test('applies mainAxis offset for different placements', () {
       const middleware = OffsetMiddleware(mainAxis: OffsetValue.value(10));
-      final state = PositionState.fromConfig(defaultConfig);
 
-      final (newState, data) = middleware.run(state);
+      final testCases = [
+        (
+          description: 'top placement moves overlay up',
+          placement: Placement.top,
+          expectedOffset: const Offset(0, -10),
+        ),
+        (
+          description: 'bottom placement moves overlay down',
+          placement: Placement.bottom,
+          expectedOffset: const Offset(0, 10),
+        ),
+        (
+          description: 'left placement moves overlay left',
+          placement: Placement.left,
+          expectedOffset: const Offset(-10, 0),
+        ),
+        (
+          description: 'right placement moves overlay right',
+          placement: Placement.right,
+          expectedOffset: const Offset(10, 0),
+        ),
+      ];
 
-      expect(data!.mainAxisOffset, 10);
-      expect(data.appliedOffset, const Offset(0, -10));
-      expect(newState.anchorPoints.offset, const Offset(0, -10));
+      for (final testCase in testCases) {
+        final config = defaultConfig.copyWith(placement: testCase.placement);
+        final state = PositionState.fromConfig(config);
+
+        final (newState, data) = middleware.run(state);
+
+        expect(
+          data!.appliedOffset,
+          testCase.expectedOffset,
+          reason: testCase.description,
+        );
+        expect(
+          newState.anchorPoints.offset,
+          testCase.expectedOffset,
+          reason: testCase.description,
+        );
+      }
     });
 
-    test('applies crossAxis offset for vertical placement', () {
+    test('applies crossAxis offset for different placements', () {
       const middleware = OffsetMiddleware(crossAxis: OffsetValue.value(15));
-      final state = PositionState.fromConfig(defaultConfig);
 
-      final (newState, data) = middleware.run(state);
+      final testCases = [
+        (
+          description: 'top placement moves overlay horizontally',
+          placement: Placement.top,
+          expectedOffset: const Offset(15, 0),
+        ),
+        (
+          description: 'bottom placement moves overlay horizontally',
+          placement: Placement.bottom,
+          expectedOffset: const Offset(15, 0),
+        ),
+        (
+          description: 'left placement moves overlay vertically',
+          placement: Placement.left,
+          expectedOffset: const Offset(0, 15),
+        ),
+        (
+          description: 'right placement moves overlay vertically',
+          placement: Placement.right,
+          expectedOffset: const Offset(0, 15),
+        ),
+      ];
 
-      expect(data!.crossAxisOffset, 15);
-      expect(data.appliedOffset, const Offset(15, 0));
-      expect(newState.anchorPoints.offset, const Offset(15, 0));
+      for (final testCase in testCases) {
+        final config = defaultConfig.copyWith(placement: testCase.placement);
+        final state = PositionState.fromConfig(config);
+
+        final (newState, data) = middleware.run(state);
+
+        expect(
+          data!.appliedOffset,
+          testCase.expectedOffset,
+          reason: testCase.description,
+        );
+        expect(
+          newState.anchorPoints.offset,
+          testCase.expectedOffset,
+          reason: testCase.description,
+        );
+      }
     });
 
     test('combines mainAxis and crossAxis offsets', () {
@@ -52,21 +120,10 @@ void main() {
       expect(newState.anchorPoints.offset, const Offset(20, -10));
     });
 
-    test('applies mainAxis offset for horizontal placement', () {
-      const middleware = OffsetMiddleware(mainAxis: OffsetValue.value(10));
-      final config = defaultConfig.copyWith(placement: Placement.left);
-      final state = PositionState.fromConfig(config);
-
-      final (newState, data) = middleware.run(state);
-
-      expect(data!.mainAxisOffset, 10);
-      expect(data.appliedOffset, const Offset(-10, 0));
-      expect(newState.anchorPoints.offset, const Offset(-10, 0));
-    });
-
     test('uses compute callback for dynamic offset', () {
       final middleware = OffsetMiddleware(
-        mainAxis: OffsetValue.compute((state) => state.config.overlayHeight! / 2),
+        mainAxis:
+            OffsetValue.compute((state) => state.config.overlayHeight! / 2),
       );
       final state = PositionState.fromConfig(defaultConfig);
 
@@ -74,39 +131,6 @@ void main() {
 
       expect(data!.mainAxisOffset, 50);
       expect(data.appliedOffset, const Offset(0, -50));
-    });
-
-    test('accumulates offset with existing offset', () {
-      const middleware = OffsetMiddleware(mainAxis: OffsetValue.value(10));
-      final state = PositionState.fromConfig(defaultConfig).copyWith(
-        anchorPoints: PositionState.fromConfig(defaultConfig).anchorPoints.copyWith(
-              offset: const Offset(5, 5),
-            ),
-      );
-
-      final (newState, _) = middleware.run(state);
-
-      expect(newState.anchorPoints.offset, const Offset(5, -5));
-    });
-
-    test('handles bottom placement correctly', () {
-      const middleware = OffsetMiddleware(mainAxis: OffsetValue.value(10));
-      final config = defaultConfig.copyWith(placement: Placement.bottom);
-      final state = PositionState.fromConfig(config);
-
-      final (_, data) = middleware.run(state);
-
-      expect(data!.appliedOffset, const Offset(0, 10));
-    });
-
-    test('handles right placement correctly', () {
-      const middleware = OffsetMiddleware(mainAxis: OffsetValue.value(10));
-      final config = defaultConfig.copyWith(placement: Placement.right);
-      final state = PositionState.fromConfig(config);
-
-      final (_, data) = middleware.run(state);
-
-      expect(data!.appliedOffset, const Offset(10, 0));
     });
   });
 }

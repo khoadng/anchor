@@ -16,7 +16,7 @@ void main() {
     placement: Placement.top,
   );
 
-  group('VirtualReferenceMiddleware', () {
+  group('Virtual', () {
     test('positions overlay at virtual point', () {
       const virtualPoint = Offset(100, 150);
       const middleware = VirtualReferenceMiddleware(

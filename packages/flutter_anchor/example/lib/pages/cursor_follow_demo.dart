@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_anchor/flutter_anchor.dart';
 
+import '../utils.dart';
+
 class CursorFollowDemo extends StatefulWidget {
   const CursorFollowDemo({super.key});
 
@@ -43,97 +45,113 @@ class _CursorFollowDemoState extends State<CursorFollowDemo> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pointer-Following Tooltip'),
-      ),
-      body: GestureDetector(
-        onPanStart: (details) => _updatePosition(details.globalPosition),
-        onPanUpdate: (details) => _updatePosition(details.globalPosition),
-        onPanEnd: (_) => _hideOverlay(),
-        onTapDown: (details) => _updatePosition(details.globalPosition),
-        onTapUp: (_) => _hideOverlay(),
-        child: MouseRegion(
-          onEnter: (event) => _updatePosition(event.position),
-          onHover: (event) => _updatePosition(event.position),
-          onExit: (_) => _hideOverlay(),
-          child: AnchorMiddlewares(
-            middlewares: [
-              if (_cursorReference != null)
-                VirtualReferenceMiddleware(_cursorReference!),
-              const FlipMiddleware(),
-              const ShiftMiddleware(),
-            ],
-            child: RawAnchor(
-              viewPadding: MediaQuery.viewPaddingOf(context),
-              controller: _anchorController,
-              placement: Placement.rightStart,
-              overlayBuilder: (context) {
-                return IgnorePointer(
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.black87,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Material(
+            child: GestureDetector(
+              onPanStart: !isDesktop
+                  ? (details) => _updatePosition(details.globalPosition)
+                  : null,
+              onPanUpdate: !isDesktop
+                  ? (details) => _updatePosition(details.globalPosition)
+                  : null,
+              onPanEnd: !isDesktop ? (_) => _hideOverlay() : null,
+              onTapDown: !isDesktop
+                  ? (details) => _updatePosition(details.globalPosition)
+                  : null,
+              onTapUp: !isDesktop ? (_) => _hideOverlay() : null,
+              child: MouseRegion(
+                onEnter: (event) => _updatePosition(event.position),
+                onHover: (event) => _updatePosition(event.position),
+                child: AnchorMiddlewares(
+                  middlewares: [
+                    if (_cursorReference != null)
+                      VirtualReferenceMiddleware(_cursorReference!),
+                    const FlipMiddleware(),
+                    const ShiftMiddleware(),
+                  ],
+                  child: RawAnchor(
+                    viewPadding: MediaQuery.viewPaddingOf(context),
+                    controller: _anchorController,
+                    placement: Placement.rightStart,
+                    overlayBuilder: (context) {
+                      return IgnorePointer(
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.black87,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Pointer Position',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'X: ${_currentPosition.dx.toStringAsFixed(1)}',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              Text(
+                                'Y: ${_currentPosition.dy.toStringAsFixed(1)}',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.blue.shade50,
+                            Colors.purple.shade50,
+                          ],
+                        ),
+                      ),
+                      child: const _Content(),
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Pointer Position',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'X: ${_currentPosition.dx.toStringAsFixed(1)}',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 11,
-                          ),
-                        ),
-                        Text(
-                          'Y: ${_currentPosition.dy.toStringAsFixed(1)}',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-              child: Container(
-                width: double.infinity,
-                height: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.blue.shade50,
-                      Colors.purple.shade50,
-                    ],
                   ),
                 ),
-                child: const _Content(),
               ),
             ),
           ),
         ),
-      ),
+        Positioned(
+          top: 16,
+          left: 16,
+          child: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+      ],
     );
   }
 }

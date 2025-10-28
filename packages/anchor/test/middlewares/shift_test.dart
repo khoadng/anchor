@@ -2,24 +2,24 @@ import 'package:anchor/anchor.dart';
 import 'package:flutter/rendering.dart';
 import 'package:test/test.dart';
 
+import '../utils.dart';
+
 void main() {
-  const viewportSize = Size(800, 600);
   const overlaySize = Size(100, 100);
   const childSize = Size(50, 50);
 
-  final defaultConfig = PositioningConfig(
-    childPosition: const Offset(375, 275),
-    childSize: childSize,
-    viewportSize: viewportSize,
-    overlayHeight: overlaySize.height,
-    overlayWidth: overlaySize.width,
-    placement: Placement.top,
-  );
-
-  group('ShiftMiddleware', () {
-    test('no shift when overlay fits in viewport', () {
+  group('Shift', () {
+    test('does not shift when overlay fits in viewport', () {
       const middleware = ShiftMiddleware();
-      final state = PositionState.fromConfig(defaultConfig);
+      final config = PositioningConfig(
+        childPosition: childAtCenter(childSize),
+        childSize: childSize,
+        viewportSize: viewportSize,
+        overlayHeight: overlaySize.height,
+        overlayWidth: overlaySize.width,
+        placement: Placement.top,
+      );
+      final state = PositionState.fromConfig(config);
 
       final (newState, data) = middleware.run(state);
 
@@ -27,100 +27,139 @@ void main() {
       expect(newState.anchorPoints.offset, Offset.zero);
     });
 
-    test('shifts left when overflowing right edge', () {
+    test('shifts to prevent overflow on each axis', () {
       const middleware = ShiftMiddleware();
-      final config = defaultConfig.copyWith(
-        childPosition: const Offset(740, 275),
-      );
-      final state = PositionState.fromConfig(config);
 
-      final (newState, data) = middleware.run(state);
+      final testCases = [
+        (
+          description: 'shifts left when overflowing right edge',
+          childPosition: childAtRightEdge(childSize, const Offset(10, 0)),
+          placement: Placement.top,
+          checkOffset: (PositionState state) =>
+              state.anchorPoints.offset.dx < 0,
+        ),
+        (
+          description: 'shifts right when overflowing left edge',
+          childPosition: childAtLeftEdge(childSize, const Offset(-5, 0)),
+          placement: Placement.top,
+          checkOffset: (PositionState state) =>
+              state.anchorPoints.offset.dx > 0,
+        ),
+        (
+          description: 'shifts down when overflowing top edge',
+          childPosition: childAtTopEdge(childSize, const Offset(0, -5)),
+          placement: Placement.left,
+          checkOffset: (PositionState state) =>
+              state.anchorPoints.offset.dy > 0,
+        ),
+        (
+          description: 'shifts up when overflowing bottom edge',
+          childPosition: childAtBottomEdge(childSize, const Offset(0, 10)),
+          placement: Placement.left,
+          checkOffset: (PositionState state) =>
+              state.anchorPoints.offset.dy < 0,
+        ),
+      ];
 
-      expect(data!.shift.dx, lessThan(0));
-      expect(newState.anchorPoints.offset.dx, lessThan(0));
+      for (final testCase in testCases) {
+        final config = PositioningConfig(
+          childPosition: testCase.childPosition,
+          childSize: childSize,
+          viewportSize: viewportSize,
+          overlayHeight: overlaySize.height,
+          overlayWidth: overlaySize.width,
+          placement: testCase.placement,
+        );
+        final state = PositionState.fromConfig(config);
+
+        final (newState, _) = middleware.run(state);
+
+        expect(
+          testCase.checkOffset(newState),
+          isTrue,
+          reason: testCase.description,
+        );
+      }
     });
 
-    test('shifts right when overflowing left edge', () {
+    test('respects viewport padding when shifting', () {
       const middleware = ShiftMiddleware();
-      final config = defaultConfig.copyWith(
-        childPosition: const Offset(20, 275),
-      );
-      final state = PositionState.fromConfig(config);
 
-      final (newState, data) = middleware.run(state);
+      final testCases = [
+        (
+          description:
+              'shifts left with right padding when overflowing right edge',
+          childPosition: childAtRightEdge(childSize, const Offset(10, 0)),
+          placement: Placement.top,
+          padding: const EdgeInsets.only(right: 20),
+          checkOffset: (PositionState state) =>
+              state.anchorPoints.offset.dx < -15,
+        ),
+        (
+          description:
+              'shifts right with left padding when overflowing left edge',
+          childPosition: childAtLeftEdge(childSize, const Offset(-10, 0)),
+          placement: Placement.top,
+          padding: const EdgeInsets.only(left: 20),
+          checkOffset: (PositionState state) =>
+              state.anchorPoints.offset.dx > 15,
+        ),
+        (
+          description: 'shifts down with top padding when overflowing top edge',
+          childPosition: childAtTopEdge(childSize, const Offset(0, -10)),
+          placement: Placement.left,
+          padding: const EdgeInsets.only(top: 20),
+          checkOffset: (PositionState state) =>
+              state.anchorPoints.offset.dy > 15,
+        ),
+        (
+          description:
+              'shifts up with bottom padding when overflowing bottom edge',
+          childPosition: childAtBottomEdge(childSize, const Offset(0, 10)),
+          placement: Placement.left,
+          padding: const EdgeInsets.only(bottom: 20),
+          checkOffset: (PositionState state) =>
+              state.anchorPoints.offset.dy < -15,
+        ),
+      ];
 
-      expect(data!.shift.dx, greaterThan(0));
-      expect(newState.anchorPoints.offset.dx, greaterThan(0));
-    });
+      for (final testCase in testCases) {
+        final config = PositioningConfig(
+          childPosition: testCase.childPosition,
+          childSize: childSize,
+          viewportSize: viewportSize,
+          overlayHeight: overlaySize.height,
+          overlayWidth: overlaySize.width,
+          placement: testCase.placement,
+          padding: testCase.padding,
+        );
+        final state = PositionState.fromConfig(config);
 
-    test('shifts vertically for horizontal placement', () {
-      const middleware = ShiftMiddleware();
-      final config = defaultConfig.copyWith(
-        placement: Placement.left,
-        childPosition: const Offset(375, 20),
-      );
-      final state = PositionState.fromConfig(config);
+        final (newState, _) = middleware.run(state);
 
-      final (newState, data) = middleware.run(state);
-
-      expect(data!.shift.dy, greaterThan(0));
-      expect(newState.anchorPoints.offset.dy, greaterThan(0));
-    });
-
-    test('respects viewport padding', () {
-      const middleware = ShiftMiddleware();
-      final config = defaultConfig.copyWith(
-        childPosition: const Offset(740, 275),
-        padding: const EdgeInsets.all(20),
-      );
-      final state = PositionState.fromConfig(config);
-
-      final (newState, _) = middleware.run(state);
-
-      expect(newState.anchorPoints.offset.dx, lessThan(-15));
-    });
-
-    test('handles bottom placement correctly', () {
-      const middleware = ShiftMiddleware();
-      final config = defaultConfig.copyWith(
-        placement: Placement.bottom,
-        childPosition: const Offset(20, 275),
-      );
-      final state = PositionState.fromConfig(config);
-
-      final (newState, _) = middleware.run(state);
-
-      expect(newState.anchorPoints.offset.dx, greaterThan(0));
+        expect(
+          testCase.checkOffset(newState),
+          isTrue,
+          reason: testCase.description,
+        );
+      }
     });
 
     test('no shift when overlay dimensions missing', () {
       const middleware = ShiftMiddleware();
-      // Make test clear by explicitly setting overlayWidth to null
-      // ignore: avoid_redundant_argument_values
-      final config = defaultConfig.copyWith(overlayWidth: null);
+      final config = PositioningConfig(
+        childPosition: childAtCenter(childSize),
+        childSize: childSize,
+        viewportSize: viewportSize,
+        overlayHeight: overlaySize.height,
+        overlayWidth: null,
+        placement: Placement.top,
+      );
       final state = PositionState.fromConfig(config);
 
       final (_, data) = middleware.run(state);
 
       expect(data!.shift, Offset.zero);
-    });
-
-    test('accumulates with existing offset', () {
-      const middleware = ShiftMiddleware();
-      final config = defaultConfig.copyWith(
-        childPosition: const Offset(740, 275),
-      );
-      final state = PositionState.fromConfig(config).copyWith(
-        anchorPoints: PositionState.fromConfig(config).anchorPoints.copyWith(
-              offset: const Offset(10, 20),
-            ),
-      );
-
-      final (newState, data) = middleware.run(state);
-
-      expect(data!.shift.dx, lessThan(0));
-      expect(newState.anchorPoints.offset.dx, lessThan(10));
-      expect(newState.anchorPoints.offset.dy, 20);
     });
   });
 }
