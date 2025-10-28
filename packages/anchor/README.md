@@ -14,6 +14,7 @@ This engine includes several common middlewares:
   * **`FlipMiddleware`**: Flips the overlay to the opposite side (e.g., `top` to `bottom`) if it overflows the viewport in its preferred direction.
   * **`ShiftMiddleware`**: Adjusts the overlay's alignment along its cross-axis (e.g., shifting it left or right) to prevent it from overflowing the viewport.
   * **`AutoPlacementMiddleware`**: Automatically chooses the best placement (e.g., `top`, `bottom`, `left`, `right`) based on which side has the most available space.
+  * **`SizeMiddleware`**: Calculates and suggests optimal sizes for the overlay based on available space and constraints.
   * **`VirtualReferenceMiddleware`**: Positions the overlay relative to a virtual `Rect` or `Offset` in space (like a cursor position) instead of a physical widget.
 
 -----
