@@ -75,7 +75,7 @@ class VirtualReferenceMiddleware
   int get hashCode => reference.hashCode;
 
   @override
-  String toString() => 'VirtualReferenceMiddleware($reference)';
+  String toString() => 'Virtual($reference)';
 
   @override
   (PositionState, VirtualReferenceData?) run(PositionState state) {

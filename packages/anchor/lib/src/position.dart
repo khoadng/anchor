@@ -4,6 +4,16 @@ import 'anchor_points.dart';
 import 'placement.dart';
 import 'types.dart';
 
+const _enabledDebug = false;
+
+void _print(dynamic message) {
+  if (_enabledDebug) {
+    // For debugging purposes only
+    // ignore: avoid_print
+    print(message);
+  }
+}
+
 /// Represents the available space around the child widget in all four directions.
 @immutable
 class AvailableSpaces {
@@ -357,8 +367,23 @@ class PositioningPipeline {
     var state = PositionState.fromConfig(config);
 
     for (final middleware in middlewares) {
+      _print('\n--- Running middleware: ${middleware.runtimeType} ---');
+
       final (newState, data) = middleware.run(state);
 
+      _print('State:');
+      _print(' - Anchor Points: ${newState.anchorPoints}');
+      _print('Config:');
+      _print(' - Child Position: ${newState.config.childPosition}');
+      _print(' - Child Size: ${newState.config.childSize}');
+      _print(' - Viewport Size: ${newState.config.viewportSize}');
+      _print(
+        ' - Overlay Size: ${newState.config.overlayWidth} x ${newState.config.overlayHeight}',
+      );
+      _print(' - Placement: ${newState.config.placement}');
+      _print(' - Padding: ${newState.config.padding}');
+      _print(' - Available Spaces: ${newState.config.spaces}');
+      _print('Middleware Data: $data');
       if (data != null) {
         state = newState.copyWith(
           metadata: newState.metadata.withData(data),

@@ -206,4 +206,7 @@ class FlipMiddleware implements PositioningMiddleware<FlipData> {
         },
     };
   }
+
+  @override
+  String toString() => 'Flip()';
 }

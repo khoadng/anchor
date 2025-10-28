@@ -4,6 +4,7 @@ export 'src/middlewares/auto_placement.dart';
 export 'src/middlewares/flip.dart';
 export 'src/middlewares/offset.dart';
 export 'src/middlewares/shift.dart';
+export 'src/middlewares/size.dart';
 export 'src/middlewares/virtual.dart';
 export 'src/placement.dart';
 export 'src/position.dart';

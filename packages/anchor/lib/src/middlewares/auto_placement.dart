@@ -70,6 +70,9 @@ class AutoPlacementMiddleware
   int get hashCode => Object.hashAll(allowedPlacements);
 
   @override
+  String toString() => 'AutoPlacement(allowedPlacements: $allowedPlacements)';
+
+  @override
   (PositionState, AutoPlacementData?) run(PositionState state) {
     final config = state.config;
     final spaces = config.spaces;

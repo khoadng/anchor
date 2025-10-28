@@ -136,4 +136,7 @@ class ShiftMiddleware implements PositioningMiddleware<ShiftData> {
       },
     );
   }
+
+  @override
+  String toString() => 'Shift()';
 }

@@ -161,7 +161,7 @@ class RawAnchor extends StatefulWidget {
   State<RawAnchor> createState() => _RawAnchorState();
 }
 
-class _RawAnchorState extends State<RawAnchor> {
+class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
   final _overlayController = OverlayPortalController();
   final _layerLink = LayerLink();
 
@@ -327,14 +327,14 @@ class _RawAnchorState extends State<RawAnchor> {
     widget.onHide?.call();
   }
 
-  void _calculateAnchorPoints({
+  (AnchorPoints, AnchorGeometry, PositionMetadata)? _calculateAnchorPoints({
     bool notify = true,
   }) {
     final childSize = _layerLink.leaderSize;
-    if (childSize == null) return;
+    if (childSize == null) return null;
 
     final renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
+    if (renderBox == null) return null;
 
     final childGlobalPosition = renderBox.localToGlobal(Offset.zero);
     final screenSize = MediaQuery.sizeOf(context);
@@ -356,7 +356,7 @@ class _RawAnchorState extends State<RawAnchor> {
 
     final pipeline = _lastPipeline;
 
-    if (pipeline == null) return;
+    if (pipeline == null) return null;
 
     final result = pipeline.run(config: config);
 
@@ -392,6 +392,8 @@ class _RawAnchorState extends State<RawAnchor> {
         _metadata = result.metadata;
       }
     }
+
+    return (newPoints, geometry, result.metadata);
   }
 
   void _handleScroll() {
@@ -454,8 +456,16 @@ class _RawAnchorState extends State<RawAnchor> {
                     opacity: _isWaitingForMeasurement ? 0.0 : 1.0,
                     child: _MeasureSize(
                       onChange: _handleOverlaySizeMeasured,
-                      child: Builder(
-                        builder: widget.overlayBuilder,
+                      child: _AnchorConstrainedBox(
+                        recalculate: switch (_metadata.get<SizeData>()) {
+                          null => null,
+                          _ => () => _calculateAnchorPoints(
+                                notify: false,
+                              ),
+                        },
+                        child: Builder(
+                          builder: widget.overlayBuilder,
+                        ),
                       ),
                     ),
                   ),
@@ -519,5 +529,40 @@ class _RenderMeasureSize extends RenderProxyBox {
         _onChange(newSize);
       });
     }
+  }
+}
+
+class _AnchorConstrainedBox extends StatelessWidget {
+  const _AnchorConstrainedBox({
+    required this.recalculate,
+    required this.child,
+  });
+
+  final (AnchorPoints, AnchorGeometry, PositionMetadata)? Function()?
+      recalculate;
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final calcFunc = recalculate;
+    if (calcFunc == null) return child;
+
+    final result = calcFunc();
+    if (result == null) return child;
+
+    final (_, _, data) = result;
+    final sizeData = data.get<SizeData>();
+    if (sizeData == null) return child;
+
+    final _ = MediaQuery.viewInsetsOf(context);
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: sizeData.availableWidth,
+        maxHeight: sizeData.availableHeight,
+      ),
+      child: child,
+    );
   }
 }

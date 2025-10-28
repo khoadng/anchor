@@ -140,45 +140,48 @@ class _SearchAnchorState extends State<_SearchAnchor> {
     return Container(
       constraints: const BoxConstraints(maxWidth: 350),
       child: Anchor(
-        viewPadding: widget.viewPadding,
+        viewPadding: widget.viewPadding + const EdgeInsets.only(top: 16),
         triggerMode: AnchorTriggerMode.focus(focusNode: widget.focusNode),
         placement: Placement.bottom,
         spacing: 8,
         overlayBuilder: (context) {
-          return Container(
-            width: AnchorData.maybeOf(context)?.geometry.childBounds?.width,
-            constraints: const BoxConstraints(maxHeight: 200),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: _filtered.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      'No results found',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  )
-                : ListView.builder(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: _filtered.length,
-                    itemBuilder: (context, index) {
-                      final suggestion = _filtered[index];
-                      return InkWell(
-                        onTap: () => _select(suggestion),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 350),
+            child: Container(
+              width: AnchorData.maybeOf(context)?.geometry.childBounds?.width,
+              constraints: const BoxConstraints(maxHeight: 300),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: _filtered.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                        'No results found',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: _filtered.length,
+                      itemBuilder: (context, index) {
+                        final suggestion = _filtered[index];
+                        return InkWell(
+                          onTap: () => _select(suggestion),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            child: Text(suggestion),
                           ),
-                          child: Text(suggestion),
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    ),
+            ),
           );
         },
         child: TextField(
