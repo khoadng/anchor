@@ -94,8 +94,6 @@ class _ChatMessageState extends State<_ChatMessage> {
           ],
           Flexible(
             child: Anchor(
-              overlayHeight: 80,
-              overlayWidth: 420,
               triggerMode: isDesktop
                   ? const HoverTriggerMode(
                       waitDuration: Duration(milliseconds: 200),
@@ -215,33 +213,66 @@ class _EmojiReactionBar extends StatelessWidget {
       {'emoji': '😂', 'label': 'Laugh'},
       {'emoji': '😮', 'label': 'Surprised'},
       {'emoji': '😢', 'label': 'Sad'},
-      {'emoji': '🎉', 'label': 'Celebrate'},
     ];
 
-    return IntrinsicHeight(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ...emojis.map(
+            (emoji) {
+              return _EmojiButton(
+                emoji: emoji['emoji']!,
+                label: emoji['label']!,
+                onTap: () => onEmojiSelected(emoji['emoji']!),
+              );
+            },
+          ),
+          const Divider(),
+          Anchor(
+            triggerMode: const HoverTriggerMode(),
+            placement: Placement.top,
+            spacing: 12,
+            overlayBuilder: (context) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Text(
+                'More options',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: emojis.map((emoji) {
-            return _EmojiButton(
-              emoji: emoji['emoji']!,
-              label: emoji['label']!,
-              onTap: () => onEmojiSelected(emoji['emoji']!),
-            );
-          }).toList(),
-        ),
+            child: IconButton(
+              icon: const Icon(Icons.more_vert, size: 20),
+              onPressed: () {},
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -267,33 +298,28 @@ class _EmojiButtonState extends State<_EmojiButton> {
   @override
   Widget build(BuildContext context) {
     return Anchor(
-      triggerMode: const HoverTriggerMode(
-        waitDuration: Duration(milliseconds: 400),
-      ),
+      triggerMode: const HoverTriggerMode(),
       placement: Placement.top,
-      overlayBuilder: (context) => IntrinsicHeight(
-        child: IntrinsicWidth(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+      spacing: 12,
+      overlayBuilder: (context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: Text(
-              '${widget.emoji} ${widget.label}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+          ],
+        ),
+        child: Text(
+          '${widget.emoji} ${widget.label}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
@@ -309,29 +335,9 @@ class _EmojiButtonState extends State<_EmojiButton> {
               color: isHovered ? Colors.grey[200] : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  widget.emoji,
-                  style: TextStyle(fontSize: isHovered ? 26 : 22),
-                ),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  height: isHovered ? 14 : 0,
-                  child: isHovered
-                      ? Text(
-                          widget.label,
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: Colors.grey[700],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ],
+            child: Text(
+              widget.emoji,
+              style: const TextStyle(fontSize: 22),
             ),
           ),
         ),
