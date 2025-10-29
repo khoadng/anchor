@@ -63,15 +63,17 @@ class GridDemo extends StatelessWidget {
             backgroundColor: Colors.grey[900],
             overlayHeight: kTooltipHeight,
             overlayWidth: kTooltipWidth,
-            triggerMode: const AnchorTriggerMode.tap(consumeOutsideTap: true),
-            backdropBuilder: (context) => ClipPath(
-              clipper: _BackdropClipper(
-                exclude: AnchorData.of(context).geometry.childBounds,
-                excludeRadius: BorderRadius.circular(8),
-              ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                child: Container(color: Colors.black26),
+            triggerMode: const AnchorTriggerMode.tap(consumeOutsideTap: false),
+            backdropBuilder: (context) => IgnorePointer(
+              child: ClipPath(
+                clipper: _BackdropClipper(
+                  exclude: AnchorData.of(context).geometry.childBounds,
+                  excludeRadius: BorderRadius.circular(8),
+                ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                  child: Container(color: Colors.black26),
+                ),
               ),
             ),
             arrowShape: const RoundedArrow(),

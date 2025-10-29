@@ -1,3 +1,6 @@
+## 0.0.11
+* Add secondary tap trigger mode
+
 ## 0.0.10
 * Update dependencies
 

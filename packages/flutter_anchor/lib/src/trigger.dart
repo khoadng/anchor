@@ -21,6 +21,11 @@ sealed class AnchorTriggerMode {
     bool? consumeOutsideTap,
   }) = TapTriggerMode;
 
+  /// {@macro secondary_tap_trigger_mode}
+  const factory AnchorTriggerMode.secondaryTap({
+    bool? consumeOutsideTap,
+  }) = SecondaryTapTriggerMode;
+
   /// {@macro focus_trigger_mode}
   const factory AnchorTriggerMode.focus({
     FocusNode? focusNode,
@@ -69,16 +74,32 @@ class HoverTriggerMode extends AnchorTriggerMode {
 /// Toggles the anchor's overlay visibility on tap.
 ///
 /// {@endtemplate}
-class TapTriggerMode extends AnchorTriggerMode {
+class TapTriggerMode extends AnchorTriggerMode with _ConsumeOutsideTapMixin {
   /// Creates a tap trigger mode.
   const TapTriggerMode({
     this.consumeOutsideTap,
   });
 
-  /// Whether a tap outside the overlay is consumed, preventing it from
-  /// reaching widgets below.
-  ///
-  /// Defaults to `false`, allowing taps to propagate to underlying widgets.
+  /// {@macro trigger_mode.consume_outside_tap}
+  @override
+  final bool? consumeOutsideTap;
+}
+
+/// {@macro anchor_trigger_mode}
+/// {@template secondary_tap_trigger_mode}
+///
+/// Toggles the anchor's overlay visibility on secondary tap (right-click).
+///
+/// {@endtemplate}
+class SecondaryTapTriggerMode extends AnchorTriggerMode
+    with _ConsumeOutsideTapMixin {
+  /// Creates a secondary tap trigger mode.
+  const SecondaryTapTriggerMode({
+    this.consumeOutsideTap,
+  });
+
+  /// {@macro trigger_mode.consume_outside_tap}
+  @override
   final bool? consumeOutsideTap;
 }
 
@@ -128,15 +149,24 @@ class FocusTriggerMode extends AnchorTriggerMode {
 /// Shows the anchor's overlay when the user performs a long press.
 ///
 /// {@endtemplate}
-class LongPressTriggerMode extends AnchorTriggerMode {
+class LongPressTriggerMode extends AnchorTriggerMode
+    with _ConsumeOutsideTapMixin {
   /// Creates a long press trigger mode.
   const LongPressTriggerMode({
     this.consumeOutsideTap,
   });
 
+  /// {@macro trigger_mode.consume_outside_tap}
+  @override
+  final bool? consumeOutsideTap;
+}
+
+mixin _ConsumeOutsideTapMixin on AnchorTriggerMode {
+  /// {@template trigger_mode.consume_outside_tap}
   /// Whether a tap outside the overlay is consumed, preventing it from
   /// reaching widgets below.
   ///
   /// Defaults to `false`, allowing taps to propagate to underlying widgets.
-  final bool? consumeOutsideTap;
+  /// {@endtemplate}
+  abstract final bool? consumeOutsideTap;
 }

@@ -1,6 +1,6 @@
 name: anchor_ui
 description: A Flutter package providing common anchored UI components like tooltips, popovers, and more
-version: 0.0.7
+version: 0.0.8
 homepage: https://github.com/khoadng/anchor
 repository: https://github.com/khoadng/anchor
 issue_tracker: https://github.com/khoadng/anchor/issues
@@ -17,7 +17,7 @@ environment:
 resolution: workspace
 
 dependencies:
-  flutter_anchor: ^0.0.10
+  flutter_anchor: ^0.0.11
   flutter:
     sdk: flutter
 
