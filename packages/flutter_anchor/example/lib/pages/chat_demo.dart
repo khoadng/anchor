@@ -365,10 +365,10 @@ class _EmojiReactionBarState extends State<_EmojiReactionBar> {
                 ],
               ),
               child: const Text(
-                'More options',
+                "The below menu is using Flutter's MenuAnchor",
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 14,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
               ),
