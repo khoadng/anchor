@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_anchor/flutter_anchor.dart';
 
-import '../utils.dart';
-
 class ListViewDemo extends StatelessWidget {
   const ListViewDemo({super.key});
 
@@ -54,6 +52,18 @@ class _ChatMessageState extends State<_ChatMessage> {
     {'text': 'The deployment is scheduled for tomorrow', 'time': '10:15 AM'},
   ].reversed.toList();
 
+  final _controller = AnchorController();
+  final _menuController = MenuController();
+
+  var _isChildHovered = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _menuController.close();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final message =
@@ -94,96 +104,171 @@ class _ChatMessageState extends State<_ChatMessage> {
           ],
           Flexible(
             child: Anchor(
-              overlayHeight: 80,
-              overlayWidth: 420,
-              triggerMode: isDesktop
-                  ? const HoverTriggerMode(
-                      waitDuration: Duration(milliseconds: 200),
-                    )
-                  : const LongPressTriggerMode(),
-              offset: Offset.zero,
+              controller: _controller,
+              triggerMode: const ManualTriggerMode(),
               placement: Placement.top,
               middlewares: const [
+                OffsetMiddleware(mainAxis: OffsetValue.value(4)),
                 ShiftMiddleware(),
               ],
-              overlayBuilder: (context) => _EmojiReactionBar(
-                onEmojiSelected: (emoji) {
-                  setState(() {
-                    selectedReaction = emoji;
-                  });
+              overlayBuilder: (context) => MouseRegion(
+                onEnter: (event) {
+                  _isChildHovered = true;
                 },
+                onExit: (event) {
+                  if (!_menuController.isOpen) {
+                    _controller.hide();
+                  }
+                  _isChildHovered = false;
+                },
+                child: _EmojiReactionBar(
+                  menuController: _menuController,
+                  onDismiss: () {
+                    _menuController.close();
+                    _controller.hide();
+                  },
+                  onEmojiSelected: (emoji) {
+                    setState(() {
+                      selectedReaction = emoji;
+                    });
+                  },
+                ),
               ),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: widget.isMe ? Colors.deepPurple : Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: MouseRegion(
+                onEnter: (event) {
+                  _controller.show();
+                },
+                onExit: (event) {
+                  if (!_isChildHovered) {
+                    _controller.hide();
+                  }
+                },
+                child: Stack(
                   children: [
-                    if (!widget.isMe)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          userName,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: avatarColor,
-                          ),
-                        ),
-                      ),
-                    Text(
-                      message['text']!,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: widget.isMe ? Colors.white : Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+                    Column(
                       children: [
-                        Text(
-                          message['time']!,
-                          style: TextStyle(
-                            fontSize: 10,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
                             color:
-                                widget.isMe ? Colors.white70 : Colors.grey[600],
+                                widget.isMe ? Colors.deepPurple : Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (!widget.isMe)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
+                                  child: Text(
+                                    userName,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      color: avatarColor,
+                                    ),
+                                  ),
+                                ),
+                              Text(
+                                message['text']!,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: widget.isMe
+                                      ? Colors.white
+                                      : Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    message['time']!,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: widget.isMe
+                                          ? Colors.white70
+                                          : Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                        if (selectedReaction != null) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: widget.isMe
-                                  ? Colors.deepPurple[700]
-                                  : Colors.grey[200],
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              selectedReaction!,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ),
-                        ],
+                        if (selectedReaction != null)
+                          const SizedBox(height: 24),
                       ],
                     ),
+                    if (selectedReaction != null) ...[
+                      Positioned(
+                        left: 8,
+                        bottom: 0,
+                        child: Anchor(
+                          triggerMode: const AnchorTriggerMode.hover(),
+                          placement: Placement.bottom,
+                          overlayBuilder: (context) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[900],
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'You reacted to this message',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedReaction = null;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey[400]!,
+                                ),
+                              ),
+                              child: Text(
+                                selectedReaction!,
+                                style: const TextStyle(fontSize: 18),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -203,9 +288,28 @@ class _ChatMessageState extends State<_ChatMessage> {
   }
 }
 
-class _EmojiReactionBar extends StatelessWidget {
-  const _EmojiReactionBar({required this.onEmojiSelected});
+class _EmojiReactionBar extends StatefulWidget {
+  const _EmojiReactionBar({
+    required this.onEmojiSelected,
+    required this.menuController,
+    required this.onDismiss,
+  });
   final Function(String) onEmojiSelected;
+  final MenuController menuController;
+  final VoidCallback onDismiss;
+
+  @override
+  State<_EmojiReactionBar> createState() => _EmojiReactionBarState();
+}
+
+class _EmojiReactionBarState extends State<_EmojiReactionBar> {
+  final _buttonFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _buttonFocusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -215,33 +319,108 @@ class _EmojiReactionBar extends StatelessWidget {
       {'emoji': '😂', 'label': 'Laugh'},
       {'emoji': '😮', 'label': 'Surprised'},
       {'emoji': '😢', 'label': 'Sad'},
-      {'emoji': '🎉', 'label': 'Celebrate'},
     ];
 
-    return IntrinsicHeight(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ...emojis.map(
+            (emoji) {
+              return _EmojiButton(
+                emoji: emoji['emoji']!,
+                label: emoji['label']!,
+                onTap: () => widget.onEmojiSelected(emoji['emoji']!),
+              );
+            },
+          ),
+          const Divider(),
+          Anchor(
+            triggerMode: const HoverTriggerMode(),
+            placement: Placement.top,
+            spacing: 12,
+            overlayBuilder: (context) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Text(
+                "The below menu is using Flutter's MenuAnchor",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: emojis.map((emoji) {
-            return _EmojiButton(
-              emoji: emoji['emoji']!,
-              label: emoji['label']!,
-              onTap: () => onEmojiSelected(emoji['emoji']!),
-            );
-          }).toList(),
-        ),
+            child: MenuAnchor(
+              controller: widget.menuController,
+              childFocusNode: _buttonFocusNode,
+              menuChildren: [
+                TextButton(
+                  onPressed: () {
+                    widget.onDismiss();
+                  },
+                  child: const Text('Add Reaction'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    widget.onDismiss();
+                  },
+                  child: const Text('Report Message'),
+                ),
+                SubmenuButton(
+                  menuChildren: [
+                    TextButton(
+                      onPressed: () {
+                        widget.onDismiss();
+                      },
+                      child: const Text('Block User'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        widget.onDismiss();
+                      },
+                      child: const Text('Mute Notifications'),
+                    ),
+                  ],
+                  child: const Text('User Options'),
+                ),
+              ],
+              builder: (context, controller, _) => IconButton(
+                focusNode: _buttonFocusNode,
+                icon: const Icon(Icons.more_vert, size: 20),
+                onPressed: () {
+                  if (controller.isOpen) {
+                    controller.close();
+                  } else {
+                    controller.open();
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -267,33 +446,28 @@ class _EmojiButtonState extends State<_EmojiButton> {
   @override
   Widget build(BuildContext context) {
     return Anchor(
-      triggerMode: const HoverTriggerMode(
-        waitDuration: Duration(milliseconds: 400),
-      ),
+      triggerMode: const HoverTriggerMode(),
       placement: Placement.top,
-      overlayBuilder: (context) => IntrinsicHeight(
-        child: IntrinsicWidth(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+      spacing: 12,
+      overlayBuilder: (context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: Text(
-              '${widget.emoji} ${widget.label}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+          ],
+        ),
+        child: Text(
+          '${widget.emoji} ${widget.label}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
@@ -309,29 +483,9 @@ class _EmojiButtonState extends State<_EmojiButton> {
               color: isHovered ? Colors.grey[200] : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  widget.emoji,
-                  style: TextStyle(fontSize: isHovered ? 26 : 22),
-                ),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  height: isHovered ? 14 : 0,
-                  child: isHovered
-                      ? Text(
-                          widget.label,
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: Colors.grey[700],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ],
+            child: Text(
+              widget.emoji,
+              style: const TextStyle(fontSize: 22),
             ),
           ),
         ),

@@ -186,16 +186,22 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
       _animationController.duration = _effectiveTransitionDuration;
     }
     if (oldWidget.triggerMode != widget.triggerMode) {
-      final oldTriggerMode = oldWidget.triggerMode;
-      final oldFocusNode =
-          oldTriggerMode is FocusTriggerMode ? oldTriggerMode.focusNode : null;
-      final newFocusNode = _focusNode;
-
-      if (oldFocusNode != newFocusNode) {
-        oldFocusNode?.removeListener(_handleFocusChange);
-        newFocusNode?.addListener(_handleFocusChange);
-      }
+      _handleTriggerModeChange(oldWidget.triggerMode);
     }
+  }
+
+  void _handleTriggerModeChange(AnchorTriggerMode? oldTriggerMode) {
+    final oldFocusNode =
+        oldTriggerMode is FocusTriggerMode ? oldTriggerMode.focusNode : null;
+    final newFocusNode = _focusNode;
+
+    if (oldFocusNode != newFocusNode) {
+      oldFocusNode?.removeListener(_handleFocusChange);
+      newFocusNode?.addListener(_handleFocusChange);
+    }
+
+    _showTimer?.cancel();
+    _hideTimer?.cancel();
   }
 
   @override
@@ -228,6 +234,8 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
   }
 
   void _handleHoverChange() {
+    if (_effectiveTriggerMode is! HoverTriggerMode) return;
+
     _hideTimer?.cancel();
     if (!_isChildHovered.value && !_isOverlayHovered.value) {
       _hideTimer = Timer(_effectiveDebounceDuration, _hideOverlay);

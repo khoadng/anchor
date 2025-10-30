@@ -452,8 +452,8 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
                 offset: _points.offset,
                 child: Align(
                   alignment: _points.overlayAlignment,
-                  child: Opacity(
-                    opacity: _isWaitingForMeasurement ? 0.0 : 1.0,
+                  child: Offstage(
+                    offstage: _isWaitingForMeasurement,
                     child: _MeasureSize(
                       onChange: _handleOverlaySizeMeasured,
                       child: _AnchorConstrainedBox(
