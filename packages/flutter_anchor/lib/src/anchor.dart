@@ -390,8 +390,6 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
                   : null,
               consumeOutsideTaps: enabled && _effectiveConsumeOutsideTap,
               child: FocusScope(
-                descendantsAreTraversable: false,
-                canRequestFocus: false,
                 skipTraversal: true,
                 onFocusChange: (hasFocus) {
                   if (enableFocus) {
