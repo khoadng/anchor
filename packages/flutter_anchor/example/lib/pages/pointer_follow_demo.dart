@@ -3,14 +3,14 @@ import 'package:flutter_anchor/flutter_anchor.dart';
 
 import '../utils.dart';
 
-class CursorFollowDemo extends StatefulWidget {
-  const CursorFollowDemo({super.key});
+class PointerFollowDemo extends StatefulWidget {
+  const PointerFollowDemo({super.key});
 
   @override
-  State<CursorFollowDemo> createState() => _CursorFollowDemoState();
+  State<PointerFollowDemo> createState() => _PointerFollowDemoState();
 }
 
-class _CursorFollowDemoState extends State<CursorFollowDemo> {
+class _PointerFollowDemoState extends State<PointerFollowDemo> {
   late final AnchorController _anchorController;
   VirtualReference? _cursorReference;
   Offset _currentPosition = Offset.zero;
@@ -64,79 +64,77 @@ class _CursorFollowDemoState extends State<CursorFollowDemo> {
               child: MouseRegion(
                 onEnter: (event) => _updatePosition(event.position),
                 onHover: (event) => _updatePosition(event.position),
-                child: AnchorMiddlewares(
+                child: RawAnchor(
+                  viewPadding: MediaQuery.viewPaddingOf(context),
+                  controller: _anchorController,
+                  placement: Placement.rightStart,
                   middlewares: [
                     if (_cursorReference != null)
                       VirtualReferenceMiddleware(_cursorReference!),
                     const FlipMiddleware(),
                     const ShiftMiddleware(),
                   ],
-                  child: RawAnchor(
-                    viewPadding: MediaQuery.viewPaddingOf(context),
-                    controller: _anchorController,
-                    placement: Placement.rightStart,
-                    overlayBuilder: (context) {
-                      return IgnorePointer(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.black87,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Pointer Position',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'X: ${_currentPosition.dx.toStringAsFixed(1)}',
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 11,
-                                ),
-                              ),
-                              Text(
-                                'Y: ${_currentPosition.dy.toStringAsFixed(1)}',
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
+                  overlayBuilder: (context) {
+                    return IgnorePointer(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.black87,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      height: double.infinity,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.blue.shade50,
-                            Colors.purple.shade50,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Pointer Position',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'X: ${_currentPosition.dx.toStringAsFixed(1)}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                              ),
+                            ),
+                            Text(
+                              'Y: ${_currentPosition.dy.toStringAsFixed(1)}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      child: const _Content(),
+                    );
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.blue.shade50,
+                          Colors.purple.shade50,
+                        ],
+                      ),
                     ),
+                    child: const _Content(),
                   ),
                 ),
               ),
@@ -172,7 +170,7 @@ class _Content extends StatelessWidget {
           ),
           SizedBox(height: 16),
           Text(
-            'Move your cursor or tap and drag in this area',
+            'Move your pointer or tap and drag in this area',
             style: TextStyle(
               fontSize: 18,
               color: Colors.black54,

@@ -11,9 +11,8 @@ Core Flutter widgets for the Anchor overlay system. This package provides the fo
 ## What's Included
 
 * **`Anchor`**: A high-level widget that includes built-in trigger logic (tap, hover, focus, manual).
-* **`RawAnchor`**: A low-level widget that only handles positioning. It gives you full control over the overlay state and requires you to provide your own positioning middleware.
+* **`RawAnchor`**: A low-level widget that only handles positioning. It gives you full control over the overlay state and requires you to provide your own positioning middleware explicitly.
 * **`AnchorContextMenu`**: A solution for showing overlays at a virtual "cursor" position.
-* **`AnchorMiddlewares`**: An `InheritedWidget` that provides custom `PositioningMiddleware` to `RawAnchor` widgets.
 
 -----
 
@@ -84,16 +83,22 @@ Anchor(
 
 ### Custom Positioning (`RawAnchor`)
 
-While `Anchor` handles common cases, you can use `RawAnchor` and `AnchorMiddlewares` to compose a custom positioning pipeline.
+While `Anchor` handles common cases, you can use `RawAnchor` to compose a custom positioning pipeline by explicitly passing middlewares.
 
 ```dart
 final _controller = AnchorController();
 
-// Wrap your RawAnchor with AnchorMiddlewares to define custom positioning
-AnchorMiddlewares(
+RawAnchor(
+  // A controller to manage the overlay state
+  controller: _controller,
+
+  // This is the initial, preferred placement
+  placement: Placement.top,
+
+  // Define custom positioning middleware
   middlewares: const [
     // 1. Add a 10px gap between the child and overlay
-    OffsetMiddleware(mainAxis: 10),
+    OffsetMiddleware(mainAxis: OffsetValue.value(10)),
 
     // 2. If it overflows, try the opposite side
     FlipMiddleware(),
@@ -101,24 +106,17 @@ AnchorMiddlewares(
     // 3. If it still overflows (e.g., on the sides), shift it
     ShiftMiddleware(),
   ],
-  child: RawAnchor(
-    // A controller to manage the overlay state
-    controller: _controller,
 
-    // This is the initial, preferred placement
-    placement: Placement.top,
-
-    overlayBuilder: (context) {
-      return Container(
-        padding: const EdgeInsets.all(8),
-        color: Colors.black,
-        child: const Text('My Overlay', style: TextStyle(color: Colors.white)),
-      );
-    },
-    child: ElevatedButton(
-      onPressed: () {},
-      child: const Text('Tap Me'),
-    ),
+  overlayBuilder: (context) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      color: Colors.black,
+      child: const Text('My Overlay', style: TextStyle(color: Colors.white)),
+    );
+  },
+  child: ElevatedButton(
+    onPressed: () {},
+    child: const Text('Tap Me'),
   ),
 )
 ```

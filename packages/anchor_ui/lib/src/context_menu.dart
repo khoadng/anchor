@@ -256,20 +256,19 @@ class _AnchorContextMenuState extends State<AnchorContextMenu> {
         builder: (context, _) {
           final ref = _controller._internalReference;
 
-          return AnchorMiddlewares(
+          return RawAnchor(
+            controller: _anchorController,
+            placement: widget.placement ?? Placement.bottomStart,
             middlewares: [
               if (ref != null) VirtualReferenceMiddleware(ref),
               const FlipMiddleware(),
               const ShiftMiddleware(),
             ],
-            child: RawAnchor(
-              controller: _anchorController,
-              placement: widget.placement ?? Placement.bottomStart,
-              viewPadding: widget.viewPadding,
-              onHide: widget.onDismiss,
-              onShow: widget.onShow,
-              backdropBuilder: widget.backdropBuilder,
-              overlayBuilder: (context) {
+            viewPadding: widget.viewPadding,
+            onHide: widget.onDismiss,
+            onShow: widget.onShow,
+            backdropBuilder: widget.backdropBuilder,
+            overlayBuilder: (context) {
                 final dismissOnTapOutside = widget.dismissOnTapOutside ?? true;
                 return TapRegion(
                   onTapOutside: (enabled && dismissOnTapOutside)
@@ -280,11 +279,10 @@ class _AnchorContextMenuState extends State<AnchorContextMenu> {
                     child: Builder(builder: widget.menuBuilder),
                   ),
                 );
-              },
-              child: _AnchorContextMenuScope(
-                controller: _controller,
-                child: Builder(builder: widget.childBuilder),
-              ),
+            },
+            child: _AnchorContextMenuScope(
+              controller: _controller,
+              child: Builder(builder: widget.childBuilder),
             ),
           );
         },

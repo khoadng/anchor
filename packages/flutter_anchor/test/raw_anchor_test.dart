@@ -5,6 +5,8 @@ import 'package:flutter_anchor/src/data.dart';
 import 'package:flutter_anchor/src/raw_anchor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+const _testMiddlewares = <PositioningMiddleware>[];
+
 void main() {
   group('RawAnchor', () {
     testWidgets('shows overlay when controller shows', (tester) async {
@@ -15,6 +17,7 @@ void main() {
           home: RawAnchor(
             controller: controller,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) => const Text('Overlay'),
             child: const Text('Child'),
           ),
@@ -24,7 +27,7 @@ void main() {
       expect(find.text('Overlay'), findsNothing);
 
       controller.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('Overlay'), findsOneWidget);
     });
@@ -37,6 +40,7 @@ void main() {
           home: RawAnchor(
             controller: controller,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) => const Text('Overlay'),
             child: const Text('Child'),
           ),
@@ -44,11 +48,11 @@ void main() {
       );
 
       controller.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('Overlay'), findsOneWidget);
 
       controller.hide();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('Overlay'), findsNothing);
     });
@@ -61,6 +65,7 @@ void main() {
           home: RawAnchor(
             controller: controller,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) => const Text('Overlay'),
             child: const Text('Child'),
           ),
@@ -68,11 +73,11 @@ void main() {
       );
 
       controller.toggle();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('Overlay'), findsOneWidget);
 
       controller.toggle();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('Overlay'), findsNothing);
     });
 
@@ -86,6 +91,7 @@ void main() {
           home: RawAnchor(
             controller: controller,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) => const Text('Overlay'),
             onShowRequested: (showOverlay) {
               showRequestedCount++;
@@ -98,7 +104,7 @@ void main() {
       );
 
       controller.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(showRequestedCount, greaterThan(0));
       expect(showOverlayCount, equals(1));
@@ -115,6 +121,7 @@ void main() {
           home: RawAnchor(
             controller: controller,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) => const Text('Overlay'),
             onHideRequested: (hideOverlay) {
               hideRequestedCount++;
@@ -127,10 +134,10 @@ void main() {
       );
 
       controller.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       controller.hide();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(hideRequestedCount, greaterThan(0));
       expect(hideOverlayCount, equals(1));
@@ -146,6 +153,7 @@ void main() {
           home: RawAnchor(
             controller: controller,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) => const Text('Overlay'),
             onShow: () => onShowCallCount++,
             child: const Text('Child'),
@@ -154,7 +162,7 @@ void main() {
       );
 
       controller.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(onShowCallCount, equals(1));
     });
@@ -168,6 +176,7 @@ void main() {
           home: RawAnchor(
             controller: controller,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) => const Text('Overlay'),
             onHide: () => onHideCallCount++,
             child: const Text('Child'),
@@ -176,10 +185,10 @@ void main() {
       );
 
       controller.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       controller.hide();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(onHideCallCount, equals(1));
     });
@@ -193,6 +202,7 @@ void main() {
           home: RawAnchor(
             controller: controller,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) {
               capturedData = AnchorData.of(context);
               return const Text('Overlay');
@@ -203,7 +213,7 @@ void main() {
       );
 
       controller.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(capturedData, isNotNull);
       expect(capturedData!.controller, equals(controller));
@@ -217,6 +227,7 @@ void main() {
           home: RawAnchor(
             controller: controller,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) => const Text('Overlay'),
             backdropBuilder: (context) => Container(
               key: const Key('backdrop'),
@@ -228,7 +239,7 @@ void main() {
       );
 
       controller.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('backdrop')), findsOneWidget);
     });
@@ -243,6 +254,7 @@ void main() {
               RawAnchor(
                 controller: controller,
                 placement: Placement.bottom,
+                middlewares: _testMiddlewares,
                 overlayBuilder: (context) => const Text('Overlay'),
                 child: const Text('Child'),
               ),
@@ -253,7 +265,7 @@ void main() {
       );
 
       controller.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('Overlay'), findsOneWidget);
 
       await tester.drag(find.byType(ListView), const Offset(0, -100));
@@ -271,6 +283,7 @@ void main() {
           home: RawAnchor(
             controller: controller1,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) => const Text('Overlay'),
             child: const Text('Child'),
           ),
@@ -278,7 +291,7 @@ void main() {
       );
 
       controller1.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('Overlay'), findsOneWidget);
 
       await tester.pumpWidget(
@@ -286,6 +299,7 @@ void main() {
           home: RawAnchor(
             controller: controller2,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) => const Text('Overlay'),
             child: const Text('Child'),
           ),
@@ -294,11 +308,11 @@ void main() {
       await tester.pump();
 
       controller1.hide();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(controller2.isShowing, isFalse);
 
       controller2.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('Overlay'), findsOneWidget);
     });
 
@@ -311,6 +325,7 @@ void main() {
           home: RawAnchor(
             controller: controller,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) => const Text('Overlay'),
             onShowRequested: (showOverlay) {
               pendingShowOverlay = showOverlay;
@@ -321,11 +336,11 @@ void main() {
       );
 
       controller.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('Overlay'), findsNothing);
 
       pendingShowOverlay?.call();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('Overlay'), findsOneWidget);
     });
 
@@ -338,6 +353,7 @@ void main() {
           home: RawAnchor(
             controller: controller,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) => const Text('Overlay'),
             onHideRequested: (hideOverlay) {
               pendingHideOverlay = hideOverlay;
@@ -348,15 +364,15 @@ void main() {
       );
 
       controller.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('Overlay'), findsOneWidget);
 
       controller.hide();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('Overlay'), findsOneWidget);
 
       pendingHideOverlay?.call();
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text('Overlay'), findsNothing);
     });
 
@@ -370,6 +386,7 @@ void main() {
           home: RawAnchor(
             controller: controller,
             placement: Placement.bottom,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) {
               buildCount++;
               return Text('Build $buildCount');
@@ -380,7 +397,7 @@ void main() {
       );
 
       controller.show();
-      await tester.pump();
+      await tester.pumpAndSettle();
       final initialCount = buildCount;
 
       await tester.pumpWidget(
@@ -388,6 +405,7 @@ void main() {
           home: RawAnchor(
             controller: controller,
             placement: Placement.top,
+            middlewares: _testMiddlewares,
             overlayBuilder: (context) {
               buildCount++;
               return Text('Build $buildCount');

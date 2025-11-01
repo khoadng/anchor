@@ -6,7 +6,7 @@ import 'anchor.dart';
 import 'controller.dart';
 import 'data.dart';
 import 'geometry.dart';
-import 'middlewares.dart';
+import 'middleware_utils.dart';
 
 const _defaultScrollBehavior = AnchorScrollBehavior.dismiss;
 
@@ -24,9 +24,9 @@ typedef RawAnchorHideRequestedCallback = void Function(
 
 /// A low-level widget that displays a pop-up overlay relative to its child.
 ///
-/// For positioning, this widget uses [PositioningMiddleware] obtained from
-/// an ancestor [AnchorMiddlewares] widget. If no [AnchorMiddlewares] is found,
-/// the overlay will show at the preferred placement without any adjustment logic.
+/// This widget provides explicit control over positioning through the
+/// [middlewares] parameter. All positioning behavior must be explicitly
+/// configured via the middlewares list.
 ///
 /// For a widget that includes built-in trigger logic and default positioning
 /// middlewares with animations, consider using [Anchor] instead.
@@ -38,6 +38,7 @@ class RawAnchor extends StatefulWidget {
     required this.overlayBuilder,
     required this.placement,
     required this.controller,
+    required this.middlewares,
     this.offset,
     this.overlayHeight,
     this.overlayWidth,
@@ -63,6 +64,14 @@ class RawAnchor extends StatefulWidget {
   /// An controller to manage the overlay's state programmatically.
   /// {@endtemplate}
   final AnchorController controller;
+
+  /// {@template anchor_middlewares_raw}
+  /// The list of positioning middlewares to apply when calculating the
+  /// overlay position.
+  ///
+  /// Middlewares are applied in order and can modify the positioning behavior.
+  /// {@endtemplate}
+  final List<PositioningMiddleware> middlewares;
 
   /// {@template anchor_offset}
   /// Absolute position adjustment applied after middleware calculations.
@@ -170,8 +179,7 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
 
   Size? _measuredOverlaySize;
 
-  List<PositioningMiddleware>? _lastMiddlewares;
-  PositioningPipeline? _lastPipeline;
+  late PositioningPipeline _pipeline;
 
   var _points = const AnchorPoints(
     childAnchor: Alignment.topLeft,
@@ -199,6 +207,7 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    _pipeline = PositioningPipeline(middlewares: widget.middlewares);
     _controller.addListener(_handleControllerChange);
   }
 
@@ -209,6 +218,15 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
       oldWidget.controller.removeListener(_handleControllerChange);
       _controller.addListener(_handleControllerChange);
     }
+    if (MiddlewareUtils.haveMiddlewaresChanged(
+      oldWidget.middlewares,
+      widget.middlewares,
+    )) {
+      _pipeline = PositioningPipeline(middlewares: widget.middlewares);
+      if (_overlayController.isShowing) {
+        _calculateAnchorPoints(notify: false);
+      }
+    }
   }
 
   @override
@@ -216,28 +234,9 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
     super.didChangeDependencies();
 
     final currentSize = MediaQuery.sizeOf(context);
-    final currentMiddlewares = AnchorMiddlewares.of(context);
-
-    // Check if middlewares changed (AnchorMiddlewares.updateShouldNotify already
-    // filtered most cases, but didChangeDependencies can be called for other
-    // reasons like MediaQuery or Scrollable changes, so we verify here)
-    final middlewaresChanged = !identical(_lastMiddlewares, currentMiddlewares);
 
     if (_lastScreenSize != currentSize) {
       _lastScreenSize = currentSize;
-
-      if (_overlayController.isShowing) {
-        _calculateAnchorPoints(notify: false);
-      }
-    }
-
-    // Recalculate if middlewares changed
-    if (middlewaresChanged) {
-      _lastMiddlewares = currentMiddlewares;
-
-      _lastPipeline = PositioningPipeline(
-        middlewares: _lastMiddlewares!,
-      );
 
       if (_overlayController.isShowing) {
         _calculateAnchorPoints(notify: false);
@@ -354,11 +353,7 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
       placement: widget.placement,
     );
 
-    final pipeline = _lastPipeline;
-
-    if (pipeline == null) return null;
-
-    final result = pipeline.run(config: config);
+    final result = _pipeline.run(config: config);
 
     var newPoints = result.state.anchorPoints;
 

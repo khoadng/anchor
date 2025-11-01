@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'pages/chat_demo.dart';
-import 'pages/cursor_follow_demo.dart';
+import 'pages/pointer_follow_demo.dart';
 import 'pages/search_demo.dart';
 import 'widgets/demo_card.dart';
 
@@ -59,7 +59,7 @@ class HomePage extends StatelessWidget {
             icon: Icons.touch_app,
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const CursorFollowDemo()),
+              MaterialPageRoute(builder: (_) => const PointerFollowDemo()),
             ),
           ),
         ],
