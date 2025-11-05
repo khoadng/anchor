@@ -34,11 +34,6 @@ class RawAnchor extends StatefulWidget {
   /// Creates a [RawAnchor] widget.
   const RawAnchor({
     super.key,
-    required this.child,
-    required this.overlayBuilder,
-    required this.placement,
-    required this.controller,
-    required this.middlewares,
     this.offset,
     this.overlayHeight,
     this.overlayWidth,
@@ -49,6 +44,11 @@ class RawAnchor extends StatefulWidget {
     this.backdropBuilder,
     this.onShow,
     this.onHide,
+    required this.placement,
+    required this.controller,
+    required this.middlewares,
+    required this.overlayBuilder,
+    required this.child,
   });
 
   /// The widget that the overlay is anchored to.

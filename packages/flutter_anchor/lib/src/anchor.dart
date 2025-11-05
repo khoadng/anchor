@@ -20,8 +20,6 @@ class Anchor extends StatefulWidget {
   /// Creates an anchor widget.
   const Anchor({
     super.key,
-    required this.child,
-    required this.overlayBuilder,
     this.controller,
     this.spacing,
     this.offset,
@@ -38,6 +36,8 @@ class Anchor extends StatefulWidget {
     this.onShow,
     this.onHide,
     this.enabled,
+    required this.overlayBuilder,
+    required this.child,
   });
 
   /// The widget that the overlay is anchored to.
@@ -254,12 +254,10 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
     if (hasChildFocus || hasOverlayFocus) {
       _showOverlay();
     } else {
-      _hideTimer = Timer(_effectiveDebounceDuration, () {
-        final hasFocus = _focusNode?.hasFocus ?? false;
-        if (!hasFocus && !_isOverlayFocused.value) {
-          _hideOverlay();
-        }
-      });
+      final hasFocus = _focusNode?.hasFocus ?? false;
+      if (!hasFocus && !_isOverlayFocused.value) {
+        _hideOverlay();
+      }
     }
   }
 
