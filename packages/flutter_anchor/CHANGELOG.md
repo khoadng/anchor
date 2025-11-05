@@ -1,3 +1,6 @@
+## 0.0.12
+* Remove debounce on focus trigger
+
 ## 0.0.11
 * Add secondary tap trigger mode
 
