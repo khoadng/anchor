@@ -138,8 +138,8 @@ AnchorContextMenu(
 | Demo | Description |
 | :--- | :--- |
 | **Wikipedia Links** | Hover over links to show a rich preview card, just like on Wikipedia. |
-| **Desktop UI** | Build macOS-style menu bars (manual click) and dock tooltips (hover). |
-| **Grid Popovers** | Tap grid items to show a detailed popover with a beautiful blur backdrop. |
-| **Mailbox Context Menus** | Gmail-style inbox with context menus on each email. |
+| **Desktop UI** | Build macOS-style desktop that demonstrates context menus, popovers, and tooltips. |
+| **Grid Popovers** | Tap grid items to show a detailed popover with a blur backdrop. |
+| **Mailbox Context Menus** | Gmail-style inbox with nested context menus. |
 
 -----

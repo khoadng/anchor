@@ -12,7 +12,6 @@ Core Flutter widgets for the Anchor overlay system. This package provides the fo
 
 * **`Anchor`**: A high-level widget that includes built-in trigger logic (tap, hover, focus, manual).
 * **`RawAnchor`**: A low-level widget that only handles positioning. It gives you full control over the overlay state and requires you to provide your own positioning middleware explicitly.
-* **`AnchorContextMenu`**: A solution for showing overlays at a virtual "cursor" position.
 
 -----
 
@@ -186,8 +185,8 @@ Due to how this package works, there are some limitations to be aware of:
 
 ## Demos
 
-
 | Demo | Description |
 | :--- | :--- |
 | **Search Autocomplete**| Display a list of suggestions when a `TextField` gains focus. |
 | **Chat Reactions** | Show an emoji reaction bar on hover, just like in MS Teams or Slack. |
+| **Pointer Following Tooltip** | A tooltip that follows the cursor position. |
