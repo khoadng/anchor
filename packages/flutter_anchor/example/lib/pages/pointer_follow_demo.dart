@@ -12,8 +12,7 @@ class PointerFollowDemo extends StatefulWidget {
 
 class _PointerFollowDemoState extends State<PointerFollowDemo> {
   late final AnchorController _anchorController;
-  VirtualReference? _cursorReference;
-  Offset _currentPosition = Offset.zero;
+  final _cursorPosition = ValueNotifier(Offset.zero);
 
   @override
   void initState() {
@@ -24,17 +23,15 @@ class _PointerFollowDemoState extends State<PointerFollowDemo> {
   @override
   void dispose() {
     _anchorController.dispose();
+    _cursorPosition.dispose();
     super.dispose();
   }
 
   void _updatePosition(Offset position) {
-    setState(() {
-      _currentPosition = position;
-      _cursorReference = VirtualReference.fromPoint(position);
-      if (!_anchorController.isShowing) {
-        _anchorController.show();
-      }
-    });
+    _cursorPosition.value = position;
+    if (!_anchorController.isShowing) {
+      _anchorController.show();
+    }
   }
 
   void _hideOverlay() {
@@ -64,63 +61,68 @@ class _PointerFollowDemoState extends State<PointerFollowDemo> {
               child: MouseRegion(
                 onEnter: (event) => _updatePosition(event.position),
                 onHover: (event) => _updatePosition(event.position),
-                child: RawAnchor(
-                  viewPadding: MediaQuery.viewPaddingOf(context),
-                  controller: _anchorController,
-                  placement: Placement.rightStart,
-                  middlewares: [
-                    if (_cursorReference != null)
-                      VirtualReferenceMiddleware(_cursorReference!),
-                    const FlipMiddleware(),
-                    const ShiftMiddleware(),
-                  ],
-                  overlayBuilder: (context) {
-                    return IgnorePointer(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.black87,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Pointer Position',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'X: ${_currentPosition.dx.toStringAsFixed(1)}',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 11,
-                              ),
-                            ),
-                            Text(
-                              'Y: ${_currentPosition.dy.toStringAsFixed(1)}',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
+                child: ListenableBuilder(
+                  listenable: _cursorPosition,
+                  builder: (context, child) => RawAnchor(
+                    viewPadding: MediaQuery.viewPaddingOf(context),
+                    controller: _anchorController,
+                    placement: Placement.rightStart,
+                    middlewares: [
+                      VirtualReferenceMiddleware(
+                        VirtualReference.fromPoint(_cursorPosition.value),
                       ),
-                    );
-                  },
+                      const FlipMiddleware(),
+                      const ShiftMiddleware(),
+                    ],
+                    overlayBuilder: (context) {
+                      return IgnorePointer(
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.black87,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Pointer Position',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'X: ${_cursorPosition.value.dx.toStringAsFixed(1)}',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              Text(
+                                'Y: ${_cursorPosition.value.dy.toStringAsFixed(1)}',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    child: child!,
+                  ),
                   child: Container(
                     width: double.infinity,
                     height: double.infinity,
