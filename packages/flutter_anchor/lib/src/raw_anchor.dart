@@ -396,12 +396,12 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
 
     switch (_effectiveScrollBehavior) {
       case AnchorScrollBehavior.dismiss:
-        handleHideRequest();
+        _hideOverlay();
       case AnchorScrollBehavior.reposition:
         if (_isChildInViewport()) {
           _calculateAnchorPoints();
         } else {
-          handleHideRequest();
+          _hideOverlay();
         }
       case AnchorScrollBehavior.none:
         break;
@@ -418,6 +418,8 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
 
     final childRect = childGlobalPosition & childSize;
     final screenRect = Offset.zero & screenSize;
+
+    // print('Child Rect: $childRect');
 
     return screenRect.overlaps(childRect);
   }
