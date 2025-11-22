@@ -269,16 +269,16 @@ class _AnchorContextMenuState extends State<AnchorContextMenu> {
             onShow: widget.onShow,
             backdropBuilder: widget.backdropBuilder,
             overlayBuilder: (context) {
-                final dismissOnTapOutside = widget.dismissOnTapOutside ?? true;
-                return TapRegion(
-                  onTapOutside: (enabled && dismissOnTapOutside)
-                      ? (_) => _controller.hide()
-                      : null,
-                  child: _AnchorContextMenuScope(
-                    controller: _controller,
-                    child: Builder(builder: widget.menuBuilder),
-                  ),
-                );
+              final dismissOnTapOutside = widget.dismissOnTapOutside ?? true;
+              return TapRegion(
+                onTapOutside: (enabled && dismissOnTapOutside)
+                    ? (_) => _controller.hide()
+                    : null,
+                child: _AnchorContextMenuScope(
+                  controller: _controller,
+                  child: Builder(builder: widget.menuBuilder),
+                ),
+              );
             },
             child: _AnchorContextMenuScope(
               controller: _controller,
