@@ -110,36 +110,41 @@ class _MacosDesktopDemoState extends State<MacosDesktopDemo> {
                       : null,
                   child: Stack(
                     children: [
-                      Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              isDesktop
-                                  ? 'Click an icon in the top-right bar, hover over dock icons, or right-click on background. 👆'
-                                  : 'Click an icon in the top-right bar, hover over dock icons, or long-press on background. 👆',
-                              style: const TextStyle(color: Colors.grey),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                setState(() {
-                                  _isDockOnLeft = !_isDockOnLeft;
-                                });
-                              },
-                              icon: Icon(
-                                _isDockOnLeft
-                                    ? Icons.arrow_downward
-                                    : Icons.arrow_back,
+                      Positioned.fill(
+                        child: ColoredBox(
+                          color: Colors.transparent,
+                          child: Center(
+                            child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                isDesktop
+                                    ? 'Click an icon in the top-right bar, hover over dock icons, or right-click on background. 👆'
+                                    : 'Click an icon in the top-right bar, hover over dock icons, or long-press on background. 👆',
+                                style: const TextStyle(color: Colors.grey),
+                                textAlign: TextAlign.center,
                               ),
-                              label: Text(
-                                _isDockOnLeft
-                                    ? 'Move Dock to Bottom'
-                                    : 'Move Dock to Left',
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    _isDockOnLeft = !_isDockOnLeft;
+                                  });
+                                },
+                                icon: Icon(
+                                  _isDockOnLeft
+                                      ? Icons.arrow_downward
+                                      : Icons.arrow_back,
+                                ),
+                                label: Text(
+                                  _isDockOnLeft
+                                      ? 'Move Dock to Bottom'
+                                      : 'Move Dock to Left',
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          ),
                         ),
                       ),
                       if (!_isDockOnLeft)
