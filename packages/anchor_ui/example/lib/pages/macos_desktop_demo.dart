@@ -97,72 +97,72 @@ class _MacosDesktopDemoState extends State<MacosDesktopDemo> {
                 placement: Placement.rightStart,
                 viewPadding: const EdgeInsets.all(8),
                 menuBuilder: _buildContextMenu,
-                childBuilder: (context) => GestureDetector(
-                  onSecondaryTapDown: isDesktop
-                      ? (event) {
-                          context.showMenu(event.globalPosition);
-                        }
-                      : null,
-                  onLongPressStart: !isDesktop
-                      ? (details) {
-                          context.showMenu(details.globalPosition);
-                        }
-                      : null,
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
+                childBuilder: (context) => Stack(
+                  children: [
+                    Positioned.fill(
+                      child: GestureDetector(
+                        onSecondaryTapDown: isDesktop
+                            ? (event) {
+                                context.showMenu(event.globalPosition);
+                              }
+                            : null,
+                        onLongPressStart: !isDesktop
+                            ? (details) {
+                                context.showMenu(details.globalPosition);
+                              }
+                            : null,
                         child: ColoredBox(
                           color: Colors.transparent,
                           child: Center(
                             child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                isDesktop
-                                    ? 'Click an icon in the top-right bar, hover over dock icons, or right-click on background. 👆'
-                                    : 'Click an icon in the top-right bar, hover over dock icons, or long-press on background. 👆',
-                                style: const TextStyle(color: Colors.grey),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: () {
-                                  setState(() {
-                                    _isDockOnLeft = !_isDockOnLeft;
-                                  });
-                                },
-                                icon: Icon(
-                                  _isDockOnLeft
-                                      ? Icons.arrow_downward
-                                      : Icons.arrow_back,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  isDesktop
+                                      ? 'Click an icon in the top-right bar, hover over dock icons, or right-click on background. 👆'
+                                      : 'Click an icon in the top-right bar, hover over dock icons, or long-press on background. 👆',
+                                  style: const TextStyle(color: Colors.grey),
+                                  textAlign: TextAlign.center,
                                 ),
-                                label: Text(
-                                  _isDockOnLeft
-                                      ? 'Move Dock to Bottom'
-                                      : 'Move Dock to Left',
+                                const SizedBox(height: 16),
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    setState(() {
+                                      _isDockOnLeft = !_isDockOnLeft;
+                                    });
+                                  },
+                                  icon: Icon(
+                                    _isDockOnLeft
+                                        ? Icons.arrow_downward
+                                        : Icons.arrow_back,
+                                  ),
+                                  label: Text(
+                                    _isDockOnLeft
+                                        ? 'Move Dock to Bottom'
+                                        : 'Move Dock to Left',
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                      if (!_isDockOnLeft)
-                        Positioned(
-                          bottom: 16,
-                          left: 0,
-                          right: 0,
-                          child: Center(child: _MacosDock(isVertical: false)),
-                        ),
-                      if (_isDockOnLeft)
-                        Positioned(
-                          left: 16,
-                          top: 0,
-                          bottom: 0,
-                          child: Center(child: _MacosDock(isVertical: true)),
-                        ),
-                    ],
-                  ),
+                    ),
+                    if (!_isDockOnLeft)
+                      Positioned(
+                        bottom: 16,
+                        left: 0,
+                        right: 0,
+                        child: Center(child: _MacosDock(isVertical: false)),
+                      ),
+                    if (_isDockOnLeft)
+                      Positioned(
+                        left: 16,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(child: _MacosDock(isVertical: true)),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -186,21 +186,18 @@ class _MacosDesktopDemoState extends State<MacosDesktopDemo> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _ContextMenuItem(
+            const _ContextMenuItem(
               icon: Icons.refresh,
               label: 'Refresh',
-              onTap: () => context.hideMenu(),
             ),
-            _ContextMenuItem(
+            const _ContextMenuItem(
               icon: Icons.sort,
               label: 'Sort By',
-              onTap: () => context.hideMenu(),
             ),
             Divider(height: 1, color: Colors.grey[300]),
-            _ContextMenuItem(
+            const _ContextMenuItem(
               icon: Icons.display_settings,
               label: 'Settings',
-              onTap: () => context.hideMenu(),
             ),
           ],
         ),
@@ -209,6 +206,25 @@ class _MacosDesktopDemoState extends State<MacosDesktopDemo> {
   }
 
   Widget _buildStatusBar(BuildContext context) {
+    final menuItems = [
+      (
+        key: 'music',
+        icon: Icons.music_note,
+        content: const _MusicPopoverContent()
+      ),
+      (
+        key: 'bluetooth',
+        icon: Icons.bluetooth,
+        content: const _BluetoothPopoverContent()
+      ),
+      (key: 'wifi', icon: Icons.wifi, content: const _WifiPopoverContent()),
+      (
+        key: 'battery',
+        icon: Icons.battery_charging_full,
+        content: const _BatteryPopoverContent()
+      ),
+    ];
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 16,
@@ -225,31 +241,16 @@ class _MacosDesktopDemoState extends State<MacosDesktopDemo> {
             },
           ),
           const Spacer(),
-          _buildMenuItem(
-            key: 'music',
-            icon: Icons.music_note,
-            content: const _MusicPopoverContent(),
-          ),
+          for (final item in menuItems) ...[
+            _buildMenuItem(
+              key: item.key,
+              icon: item.icon,
+              content: item.content,
+            ),
+            const SizedBox(width: 8),
+          ],
           const SizedBox(width: 8),
-          _buildMenuItem(
-            key: 'bluetooth',
-            icon: Icons.bluetooth,
-            content: const _BluetoothPopoverContent(),
-          ),
-          const SizedBox(width: 8),
-          _buildMenuItem(
-            key: 'wifi',
-            icon: Icons.wifi,
-            content: const _WifiPopoverContent(),
-          ),
-          const SizedBox(width: 8),
-          _buildMenuItem(
-            key: 'battery',
-            icon: Icons.battery_charging_full,
-            content: const _BatteryPopoverContent(),
-          ),
-          const SizedBox(width: 16),
-          const MenuBarClock(),
+          const _MenuBarClock(),
           const SizedBox(width: 8),
         ],
       ),
@@ -257,7 +258,6 @@ class _MacosDesktopDemoState extends State<MacosDesktopDemo> {
   }
 }
 
-/// The tappable icon shown in the menu bar.
 class _MenuBarItem extends StatelessWidget {
   const _MenuBarItem({
     required this.icon,
@@ -286,16 +286,32 @@ class _MenuBarItem extends StatelessWidget {
   }
 }
 
-/// Popover content widgets.
+class _PopoverContainer extends StatelessWidget {
+  const _PopoverContainer({
+    required this.width,
+    required this.child,
+  });
+  final double width;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      padding: const EdgeInsets.all(12),
+      child: child,
+    );
+  }
+}
+
 class _BatteryPopoverContent extends StatelessWidget {
   const _BatteryPopoverContent();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return const _PopoverContainer(
       width: 280,
-      padding: const EdgeInsets.all(12),
-      child: const Column(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -343,10 +359,9 @@ class _WifiPopoverContent extends StatelessWidget {
   const _WifiPopoverContent();
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return const _PopoverContainer(
       width: 250,
-      padding: const EdgeInsets.all(12),
-      child: const Column(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -371,10 +386,9 @@ class _BluetoothPopoverContent extends StatelessWidget {
   const _BluetoothPopoverContent();
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return const _PopoverContainer(
       width: 250,
-      padding: const EdgeInsets.all(12),
-      child: const Column(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -398,9 +412,8 @@ class _MusicPopoverContent extends StatelessWidget {
   const _MusicPopoverContent();
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return _PopoverContainer(
       width: 280,
-      padding: const EdgeInsets.all(12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -452,7 +465,6 @@ class _MusicPopoverContent extends StatelessWidget {
   }
 }
 
-/// Helper widgets for popover content.
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title});
   final String title;
@@ -505,9 +517,8 @@ class _ContentRow extends StatelessWidget {
   }
 }
 
-/// A widget that displays a static time (read-only).
-class MenuBarClock extends StatelessWidget {
-  const MenuBarClock({super.key});
+class _MenuBarClock extends StatelessWidget {
+  const _MenuBarClock();
 
   @override
   Widget build(BuildContext context) {
@@ -524,7 +535,6 @@ class MenuBarClock extends StatelessWidget {
   }
 }
 
-/// A macOS-style dock with app icons and tooltips
 class _MacosDock extends StatelessWidget {
   _MacosDock({required this.isVertical});
   final bool isVertical;
@@ -598,7 +608,6 @@ class _DockApp {
   final Color color;
 }
 
-/// A single app icon in the dock with tooltip
 class _DockIcon extends StatelessWidget {
   const _DockIcon({required this.app, required this.isVertical});
   final _DockApp app;
@@ -642,22 +651,21 @@ class _DockIcon extends StatelessWidget {
   }
 }
 
-/// Context menu item widget
 class _ContextMenuItem extends StatelessWidget {
   const _ContextMenuItem({
     required this.icon,
     required this.label,
-    required this.onTap,
   });
 
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        context.hideMenu();
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(

@@ -3,56 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../utils.dart';
 
-/// Email model for the demo.
-class Email {
-  const Email({
-    required this.sender,
-    required this.subject,
-    required this.preview,
-    required this.time,
-    this.isRead = false,
-    this.isStarred = false,
-  });
-
-  final String sender;
-  final String subject;
-  final String preview;
-  final String time;
-  final bool isRead;
-  final bool isStarred;
-}
-
-/// Sample email data.
-final _sampleEmails = [
-  const Email(
-    sender: 'Google Cloud',
-    subject: 'Your monthly invoice is ready',
-    preview: 'View your Google Cloud invoice for the month of October...',
-    time: '10:30 AM',
-    isStarred: true,
-  ),
-  const Email(
-    sender: 'GitHub',
-    subject: 'New security vulnerability detected',
-    preview: 'We found a potential security vulnerability in one of your...',
-    time: '9:15 AM',
-  ),
-  const Email(
-    sender: 'Sarah Johnson',
-    subject: 'Re: Project proposal review',
-    preview: 'Thanks for sending over the proposal. I had a chance to...',
-    time: 'Yesterday',
-    isRead: true,
-  ),
-  const Email(
-    sender: 'Team Calendar',
-    subject: 'Reminder: Sprint planning tomorrow',
-    preview: 'Your sprint planning meeting is scheduled for tomorrow at...',
-    time: 'Yesterday',
-    isRead: true,
-  ),
-];
-
 /// Demonstrates virtual positioning for context menus.
 ///
 /// This example shows how to use [AnchorContextMenu] to create
@@ -65,7 +15,7 @@ class ContextMenuDemo extends StatefulWidget {
 }
 
 class _ContextMenuDemoState extends State<ContextMenuDemo> {
-  final _emails = List<Email>.from(_sampleEmails);
+  final _emails = List<_Email>.from(_sampleEmails);
   final _selectedEmails = <int>{};
   var _isRefreshing = false;
 
@@ -78,32 +28,22 @@ class _ContextMenuDemoState extends State<ContextMenuDemo> {
     );
   }
 
-  void _toggleStar(int index) {
+  void _updateEmail(int index, {bool? isRead, bool? isStarred}) {
     setState(() {
-      final email = _emails[index];
-      _emails[index] = Email(
-        sender: email.sender,
-        subject: email.subject,
-        preview: email.preview,
-        time: email.time,
-        isRead: email.isRead,
-        isStarred: !email.isStarred,
+      _emails[index] = _emails[index].copyWith(
+        isRead: isRead,
+        isStarred: isStarred,
       );
     });
   }
 
+  void _toggleStar(int index) {
+    final email = _emails[index];
+    _updateEmail(index, isStarred: !email.isStarred);
+  }
+
   void _markAsRead(int index) {
-    setState(() {
-      final email = _emails[index];
-      _emails[index] = Email(
-        sender: email.sender,
-        subject: email.subject,
-        preview: email.preview,
-        time: email.time,
-        isRead: true,
-        isStarred: email.isStarred,
-      );
-    });
+    _updateEmail(index, isRead: true);
   }
 
   void _deleteEmail(int index) {
@@ -147,253 +87,73 @@ class _ContextMenuDemoState extends State<ContextMenuDemo> {
     );
   }
 
+  void _toggleEmailSelection(int index) {
+    setState(() {
+      if (_selectedEmails.contains(index)) {
+        _selectedEmails.remove(index);
+      } else {
+        _selectedEmails.add(index);
+      }
+    });
+  }
+
+  Widget _buildEmailSection({
+    required String title,
+    required bool Function(MapEntry<int, _Email>) filter,
+  }) {
+    return _EmailSectionWidget(
+      title: title,
+      emails: _emails,
+      filter: filter,
+      selectedEmails: _selectedEmails,
+      onToggleSelection: _toggleEmailSelection,
+      onToggleStar: _toggleStar,
+      onArchive: (i) => _handleAction('Archived', i),
+      onDelete: _deleteEmail,
+      onMarkAsRead: _markAsRead,
+      onMarkAsUnread: (i) => _handleAction('Marked as unread', i),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Inbox'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: Colors.grey[300],
-            height: 1,
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: Colors.blue[50],
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, size: 16, color: Colors.blue[700]),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    isDesktop
-                        ? 'Right-click on background (Layer 1), sections (Layer 2), or emails (Layer 3) to show different context menus'
-                        : 'Long-press on background (Layer 1), sections (Layer 2), or emails (Layer 3) to show different context menus',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.blue[900],
-                    ),
-                  ),
-                ),
-              ],
+    return ContextMenuRegion(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Inbox'),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black87,
+          elevation: 0,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(
+              color: Colors.grey[300],
+              height: 1,
             ),
           ),
-          Expanded(
-            child: AnchorContextMenu(
-              placement: Placement.rightStart,
-              menuBuilder: (context) {
-                return Material(
-                  elevation: 8,
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    width: 220,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[900],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[700]!, width: 1.5),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Header to show this is Layer 1
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[700],
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(8),
-                              topRight: Radius.circular(8),
-                            ),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(
-                                Icons.dashboard,
-                                size: 14,
-                                color: Colors.white,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'WORKSPACE',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        _ContextMenuItem(
-                          icon: Icons.create_new_folder,
-                          label: 'New Folder',
-                          onTap: () {
-                            context.hideMenu();
-                            _showBackgroundAction('Create new folder');
-                          },
-                          textColor: Colors.white,
-                          iconColor: Colors.blue[300],
-                        ),
-                        _ContextMenuItem(
-                          icon: Icons.note_add,
-                          label: 'New Email',
-                          onTap: () {
-                            context.hideMenu();
-                            _showBackgroundAction('Compose new email');
-                          },
-                          textColor: Colors.white,
-                          iconColor: Colors.blue[300],
-                        ),
-                        _ContextMenuItem(
-                          icon: Icons.refresh,
-                          label: 'Refresh All',
-                          onTap: () {
-                            context.hideMenu();
-                            _refreshInbox();
-                          },
-                          textColor: Colors.white,
-                          iconColor: Colors.blue[300],
-                        ),
-                        Divider(height: 1, color: Colors.grey[700]),
-                        _ContextMenuItem(
-                          icon: Icons.view_module,
-                          label: 'View Options',
-                          onTap: () {
-                            context.hideMenu();
-                            _showBackgroundAction('View options');
-                          },
-                          textColor: Colors.white,
-                          iconColor: Colors.grey[400],
-                        ),
-                        _ContextMenuItem(
-                          icon: Icons.settings,
-                          label: 'Preferences',
-                          onTap: () {
-                            context.hideMenu();
-                            _showBackgroundAction('Preferences');
-                          },
-                          textColor: Colors.white,
-                          iconColor: Colors.grey[400],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-              childBuilder: (context) => GestureDetector(
-                onSecondaryTapDown: isDesktop
-                    ? (event) {
-                        context.showMenu(event.globalPosition);
-                      }
-                    : null,
-                onLongPressStart: !isDesktop
-                    ? (details) {
-                        context.showMenu(details.globalPosition);
-                      }
-                    : null,
+        ),
+        body: Column(
+          children: [
+            _InfoBanner(),
+            Expanded(
+              child: _WorkspaceContextMenu(
+                onRefresh: _refreshInbox,
+                onShowAction: _showBackgroundAction,
                 child: Stack(
                   children: [
                     ListView(
                       children: [
-                        // Section 1: Starred emails (Layer 2)
-                        _EmailSection(
+                        _buildEmailSection(
                           title: 'Starred',
-                          emails: _emails
-                              .asMap()
-                              .entries
-                              .where((e) => e.value.isStarred)
-                              .toList(),
-                          selectedEmails: _selectedEmails,
-                          onTap: (entry) {
-                            final index = entry.key;
-                            setState(() {
-                              if (_selectedEmails.contains(index)) {
-                                _selectedEmails.remove(index);
-                              } else {
-                                _selectedEmails.add(index);
-                              }
-                            });
-                          },
-                          onStar: (entry) => _toggleStar(entry.key),
-                          onArchive: (entry) =>
-                              _handleAction('Archived', entry.key),
-                          onDelete: (entry) => _deleteEmail(entry.key),
-                          onMarkAsRead: (entry) => _markAsRead(entry.key),
-                          onMarkAsUnread: (entry) =>
-                              _handleAction('Marked as unread', entry.key),
-                          onMute: (entry) => _handleAction('Muted', entry.key),
+                          filter: (e) => e.value.isStarred,
                         ),
-                        // Section 2: Unread emails (Layer 2)
-                        _EmailSection(
+                        _buildEmailSection(
                           title: 'Unread',
-                          emails: _emails
-                              .asMap()
-                              .entries
-                              .where((e) => !e.value.isRead)
-                              .toList(),
-                          selectedEmails: _selectedEmails,
-                          onTap: (entry) {
-                            final index = entry.key;
-                            setState(() {
-                              if (_selectedEmails.contains(index)) {
-                                _selectedEmails.remove(index);
-                              } else {
-                                _selectedEmails.add(index);
-                              }
-                            });
-                          },
-                          onStar: (entry) => _toggleStar(entry.key),
-                          onArchive: (entry) =>
-                              _handleAction('Archived', entry.key),
-                          onDelete: (entry) => _deleteEmail(entry.key),
-                          onMarkAsRead: (entry) => _markAsRead(entry.key),
-                          onMarkAsUnread: (entry) =>
-                              _handleAction('Marked as unread', entry.key),
-                          onMute: (entry) => _handleAction('Muted', entry.key),
+                          filter: (e) => !e.value.isRead,
                         ),
-                        // Section 3: All other emails (Layer 2)
-                        _EmailSection(
+                        _buildEmailSection(
                           title: 'Other',
-                          emails: _emails
-                              .asMap()
-                              .entries
-                              .where(
-                                (e) => e.value.isRead && !e.value.isStarred,
-                              )
-                              .toList(),
-                          selectedEmails: _selectedEmails,
-                          onTap: (entry) {
-                            final index = entry.key;
-                            setState(() {
-                              if (_selectedEmails.contains(index)) {
-                                _selectedEmails.remove(index);
-                              } else {
-                                _selectedEmails.add(index);
-                              }
-                            });
-                          },
-                          onStar: (entry) => _toggleStar(entry.key),
-                          onArchive: (entry) =>
-                              _handleAction('Archived', entry.key),
-                          onDelete: (entry) => _deleteEmail(entry.key),
-                          onMarkAsRead: (entry) => _markAsRead(entry.key),
-                          onMarkAsUnread: (entry) =>
-                              _handleAction('Marked as unread', entry.key),
-                          onMute: (entry) => _handleAction('Muted', entry.key),
+                          filter: (e) => e.value.isRead && !e.value.isStarred,
                         ),
                       ],
                     ),
@@ -408,14 +168,116 @@ class _ContextMenuDemoState extends State<ContextMenuDemo> {
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Individual email item with context menu.
+class _EmailCheckbox extends StatelessWidget {
+  const _EmailCheckbox({required this.isSelected});
+
+  final bool isSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12, top: 4),
+      child: Icon(
+        isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+        size: 20,
+        color: Colors.grey[600],
+      ),
+    );
+  }
+}
+
+class _EmailStarIcon extends StatelessWidget {
+  const _EmailStarIcon({
+    required this.isStarred,
+    required this.onTap,
+  });
+
+  final bool isStarred;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12, top: 4),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Icon(
+          isStarred ? Icons.star : Icons.star_outline,
+          size: 20,
+          color: isStarred ? Colors.amber : Colors.grey[600],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmailContent extends StatelessWidget {
+  const _EmailContent({required this.email});
+
+  final _Email email;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                email.sender,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight:
+                      email.isRead ? FontWeight.normal : FontWeight.bold,
+                  color: Colors.black87,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              email.time,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          email.subject,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: email.isRead ? FontWeight.normal : FontWeight.bold,
+            color: Colors.black87,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          email.preview,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey[700],
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+}
+
 class _EmailItem extends StatelessWidget {
   const _EmailItem({
     required this.email,
@@ -426,10 +288,9 @@ class _EmailItem extends StatelessWidget {
     required this.onDelete,
     required this.onMarkAsRead,
     required this.onMarkAsUnread,
-    required this.onMute,
   });
 
-  final Email email;
+  final _Email email;
   final bool isSelected;
   final VoidCallback onTap;
   final VoidCallback onStar;
@@ -437,141 +298,74 @@ class _EmailItem extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onMarkAsRead;
   final VoidCallback onMarkAsUnread;
-  final VoidCallback onMute;
 
   @override
   Widget build(BuildContext context) {
+    final colors = _MenuColorScheme.green;
     return AnchorContextMenu(
       placement: Placement.rightStart,
       viewPadding: const EdgeInsets.all(8),
-      menuBuilder: (context) {
-        return Material(
-          elevation: 8,
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            width: 220,
-            decoration: BoxDecoration(
-              color: Colors.green[50],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.green[300]!, width: 1.5),
+      menuBuilder: (context) => _MenuContainer(
+        color: colors.background,
+        borderColor: colors.border,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _MenuHeader(
+              icon: Icons.email,
+              label: 'EMAIL',
+              backgroundColor: colors.header,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header to show this is Layer 3 (Email)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green[600],
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8),
-                    ),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.email, size: 14, color: Colors.white),
-                      SizedBox(width: 6),
-                      Text(
-                        'EMAIL',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _ContextMenuItem(
-                  icon: Icons.reply,
-                  label: 'Reply',
-                  onTap: () {
-                    context.hideMenu();
-                    onArchive();
-                  },
-                  textColor: Colors.green[900],
-                  iconColor: Colors.green[700],
-                ),
-                _ContextMenuItem(
-                  icon: Icons.forward,
-                  label: 'Forward',
-                  onTap: () {
-                    context.hideMenu();
-                    onArchive();
-                  },
-                  textColor: Colors.green[900],
-                  iconColor: Colors.green[700],
-                ),
-                Divider(height: 1, color: Colors.green[200]),
-                _ContextMenuItem(
-                  icon: email.isRead
-                      ? Icons.mark_email_unread
-                      : Icons.mark_email_read,
-                  label: email.isRead ? 'Mark Unread' : 'Mark Read',
-                  onTap: () {
-                    context.hideMenu();
-                    if (email.isRead) {
-                      onMarkAsUnread();
-                    } else {
-                      onMarkAsRead();
-                    }
-                  },
-                  textColor: Colors.green[900],
-                  iconColor: Colors.green[700],
-                ),
-                _ContextMenuItem(
-                  icon: email.isStarred ? Icons.star : Icons.star_outline,
-                  label: email.isStarred ? 'Unstar' : 'Star',
-                  onTap: () {
-                    context.hideMenu();
-                    onStar();
-                  },
-                  textColor: Colors.green[900],
-                  iconColor: Colors.green[700],
-                ),
-                Divider(height: 1, color: Colors.green[200]),
-                _ContextMenuItem(
-                  icon: Icons.archive_outlined,
-                  label: 'Archive',
-                  onTap: () {
-                    context.hideMenu();
-                    onArchive();
-                  },
-                  textColor: Colors.green[900],
-                  iconColor: Colors.green[700],
-                ),
-                _ContextMenuItem(
-                  icon: Icons.delete_outline,
-                  label: 'Delete',
-                  onTap: () {
-                    context.hideMenu();
-                    onDelete();
-                  },
-                  textColor: Colors.red[700],
-                  iconColor: Colors.red[600],
-                ),
-              ],
+            _ContextMenuItem(
+              icon: Icons.reply,
+              label: 'Reply',
+              onTap: onArchive,
+              textColor: colors.text,
+              iconColor: colors.icon,
             ),
-          ),
-        );
-      },
-      childBuilder: (context) => GestureDetector(
-        onSecondaryTapDown: isDesktop
-            ? (event) {
-                context.showMenu(event.globalPosition);
-              }
-            : null,
-        onLongPressStart: !isDesktop
-            ? (details) {
-                context.showMenu(details.globalPosition);
-              }
-            : null,
+            _ContextMenuItem(
+              icon: Icons.forward,
+              label: 'Forward',
+              onTap: onArchive,
+              textColor: colors.text,
+              iconColor: colors.icon,
+            ),
+            const Divider(height: 1),
+            _ContextMenuItem(
+              icon: email.isRead
+                  ? Icons.mark_email_unread
+                  : Icons.mark_email_read,
+              label: email.isRead ? 'Mark Unread' : 'Mark Read',
+              onTap: email.isRead ? onMarkAsUnread : onMarkAsRead,
+              textColor: colors.text,
+              iconColor: colors.icon,
+            ),
+            _ContextMenuItem(
+              icon: email.isStarred ? Icons.star : Icons.star_outline,
+              label: email.isStarred ? 'Unstar' : 'Star',
+              onTap: onStar,
+              textColor: colors.text,
+              iconColor: colors.icon,
+            ),
+            const Divider(height: 1),
+            _ContextMenuItem(
+              icon: Icons.archive_outlined,
+              label: 'Archive',
+              onTap: onArchive,
+              textColor: colors.text,
+              iconColor: colors.icon,
+            ),
+            _ContextMenuItem(
+              icon: Icons.delete_outline,
+              label: 'Delete',
+              onTap: onDelete,
+              textColor: Colors.red[700],
+              iconColor: Colors.red[600],
+            ),
+          ],
+        ),
+      ),
+      childBuilder: (context) => _ContextMenuGestureDetector(
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: isSelected
@@ -588,86 +382,9 @@ class _EmailItem extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Checkbox
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12, top: 4),
-                    child: Icon(
-                      isSelected
-                          ? Icons.check_box
-                          : Icons.check_box_outline_blank,
-                      size: 20,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  // Star
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12, top: 4),
-                    child: GestureDetector(
-                      onTap: onStar,
-                      child: Icon(
-                        email.isStarred ? Icons.star : Icons.star_outline,
-                        size: 20,
-                        color:
-                            email.isStarred ? Colors.amber : Colors.grey[600],
-                      ),
-                    ),
-                  ),
-                  // Email content
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                email.sender,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: email.isRead
-                                      ? FontWeight.normal
-                                      : FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(
-                              email.time,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          email.subject,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: email.isRead
-                                ? FontWeight.normal
-                                : FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          email.preview,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[700],
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
+                  _EmailCheckbox(isSelected: isSelected),
+                  _EmailStarIcon(isStarred: email.isStarred, onTap: onStar),
+                  Expanded(child: _EmailContent(email: email)),
                 ],
               ),
             ),
@@ -678,162 +395,286 @@ class _EmailItem extends StatelessWidget {
   }
 }
 
-class _EmailSection extends StatelessWidget {
-  const _EmailSection({
+class _InfoBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Colors.blue[50],
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, size: 16, color: Colors.blue[700]),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isDesktop
+                  ? 'Right-click on background (Layer 1), sections (Layer 2), or emails (Layer 3) to show different context menus'
+                  : 'Long-press on background (Layer 1), sections (Layer 2), or emails (Layer 3) to show different context menus',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.blue[900],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WorkspaceContextMenu extends StatelessWidget {
+  const _WorkspaceContextMenu({
+    required this.child,
+    required this.onRefresh,
+    required this.onShowAction,
+  });
+
+  final Widget child;
+  final VoidCallback onRefresh;
+  final void Function(String) onShowAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = _MenuColorScheme.workspace;
+    return AnchorContextMenu(
+      placement: Placement.rightStart,
+      menuBuilder: (context) => _MenuContainer(
+        color: colors.background,
+        borderColor: colors.border,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _MenuHeader(
+              icon: Icons.dashboard,
+              label: 'WORKSPACE',
+              backgroundColor: colors.header,
+            ),
+            _ContextMenuItem(
+              icon: Icons.create_new_folder,
+              label: 'New Folder',
+              onTap: () => onShowAction('Create new folder'),
+              textColor: colors.text,
+              iconColor: colors.icon,
+            ),
+            _ContextMenuItem(
+              icon: Icons.note_add,
+              label: 'New Email',
+              onTap: () => onShowAction('Compose new email'),
+              textColor: colors.text,
+              iconColor: colors.icon,
+            ),
+            _ContextMenuItem(
+              icon: Icons.refresh,
+              label: 'Refresh All',
+              onTap: onRefresh,
+              textColor: colors.text,
+              iconColor: colors.icon,
+            ),
+            const Divider(height: 1),
+            _ContextMenuItem(
+              icon: Icons.view_module,
+              label: 'View Options',
+              onTap: () => onShowAction('View options'),
+              textColor: colors.text,
+              iconColor: Colors.grey[400],
+            ),
+            _ContextMenuItem(
+              icon: Icons.settings,
+              label: 'Preferences',
+              onTap: () => onShowAction('Preferences'),
+              textColor: colors.text,
+              iconColor: Colors.grey[400],
+            ),
+          ],
+        ),
+      ),
+      childBuilder: (context) => _ContextMenuGestureDetector(child: child),
+    );
+  }
+}
+
+class _ContextMenuGestureDetector extends StatelessWidget {
+  const _ContextMenuGestureDetector({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onSecondaryTapDown: isDesktop
+          ? (event) {
+              context.showMenu(event.globalPosition);
+            }
+          : null,
+      onLongPressStart: !isDesktop
+          ? (details) {
+              context.showMenu(details.globalPosition);
+            }
+          : null,
+      child: child,
+    );
+  }
+}
+
+class _MenuContainer extends StatelessWidget {
+  const _MenuContainer({
+    required this.child,
+    required this.color,
+    required this.borderColor,
+  });
+
+  final Widget child;
+  final Color color;
+  final Color borderColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      elevation: 8,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 220,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor, width: 1.5),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _MenuHeader extends StatelessWidget {
+  const _MenuHeader({
+    required this.icon,
+    required this.label,
+    required this.backgroundColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(8),
+          topRight: Radius.circular(8),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmailSectionWidget extends StatelessWidget {
+  const _EmailSectionWidget({
     required this.title,
     required this.emails,
+    required this.filter,
     required this.selectedEmails,
-    required this.onTap,
-    required this.onStar,
+    required this.onToggleSelection,
+    required this.onToggleStar,
     required this.onArchive,
     required this.onDelete,
     required this.onMarkAsRead,
     required this.onMarkAsUnread,
-    required this.onMute,
   });
 
   final String title;
-  final List<MapEntry<int, Email>> emails;
+  final List<_Email> emails;
+  final bool Function(MapEntry<int, _Email>) filter;
   final Set<int> selectedEmails;
-  final void Function(MapEntry<int, Email>) onTap;
-  final void Function(MapEntry<int, Email>) onStar;
-  final void Function(MapEntry<int, Email>) onArchive;
-  final void Function(MapEntry<int, Email>) onDelete;
-  final void Function(MapEntry<int, Email>) onMarkAsRead;
-  final void Function(MapEntry<int, Email>) onMarkAsUnread;
-  final void Function(MapEntry<int, Email>) onMute;
+  final void Function(int) onToggleSelection;
+  final void Function(int) onToggleStar;
+  final void Function(int) onArchive;
+  final void Function(int) onDelete;
+  final void Function(int) onMarkAsRead;
+  final void Function(int) onMarkAsUnread;
 
   @override
   Widget build(BuildContext context) {
-    if (emails.isEmpty) return const SizedBox.shrink();
+    final filteredEmails = emails.asMap().entries.where(filter).toList();
+    if (filteredEmails.isEmpty) return const SizedBox.shrink();
 
+    final colors = _MenuColorScheme.orange;
     return AnchorContextMenu(
       placement: Placement.rightStart,
-      menuBuilder: (context) {
-        return Material(
-          elevation: 8,
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            width: 220,
-            decoration: BoxDecoration(
-              color: Colors.orange[50],
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.orange[300]!, width: 1.5),
+      menuBuilder: (context) => _MenuContainer(
+        color: colors.background,
+        borderColor: colors.border,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _MenuHeader(
+              icon: Icons.folder,
+              label: 'FOLDER: ${title.toUpperCase()}',
+              backgroundColor: colors.header,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header to show this is Layer 2 (Folder)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+            _ContextMenuItem(
+              icon: Icons.select_all,
+              label: 'Select All ($title)',
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Select all in $title folder'),
+                    duration: const Duration(seconds: 1),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.orange[600],
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.folder, size: 14, color: Colors.white),
-                      const SizedBox(width: 6),
-                      Text(
-                        'FOLDER: ${title.toUpperCase()}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _ContextMenuItem(
-                  icon: Icons.select_all,
-                  label: 'Select All ($title)',
-                  onTap: () {
-                    context.hideMenu();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Select all in $title folder'),
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                  textColor: Colors.orange[900],
-                  iconColor: Colors.orange[700],
-                ),
-                _ContextMenuItem(
-                  icon: Icons.mark_email_read,
-                  label: 'Mark All Read',
-                  onTap: () {
-                    context.hideMenu();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Mark all as read in $title folder'),
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                  textColor: Colors.orange[900],
-                  iconColor: Colors.orange[700],
-                ),
-                Divider(height: 1, color: Colors.orange[200]),
-                _ContextMenuItem(
-                  icon: Icons.drive_file_move,
-                  label: 'Move Folder',
-                  onTap: () {
-                    context.hideMenu();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Move $title folder'),
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                  textColor: Colors.orange[900],
-                  iconColor: Colors.orange[700],
-                ),
-                _ContextMenuItem(
-                  icon: Icons.edit,
-                  label: 'Rename Folder',
-                  onTap: () {
-                    context.hideMenu();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Rename $title folder'),
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                  textColor: Colors.orange[900],
-                  iconColor: Colors.orange[700],
-                ),
-              ],
+                );
+              },
+              textColor: colors.text,
+              iconColor: colors.icon,
             ),
-          ),
-        );
-      },
-      childBuilder: (context) => GestureDetector(
-        onSecondaryTapDown: isDesktop
-            ? (event) {
-                context.showMenu(event.globalPosition);
-              }
-            : null,
-        onLongPressStart: !isDesktop
-            ? (details) {
-                context.showMenu(details.globalPosition);
-              }
-            : null,
+            _ContextMenuItem(
+              icon: Icons.mark_email_read,
+              label: 'Mark All Read',
+              onTap: () {},
+              textColor: colors.text,
+              iconColor: colors.icon,
+            ),
+            const Divider(height: 1),
+            _ContextMenuItem(
+              icon: Icons.drive_file_move,
+              label: 'Move Folder',
+              onTap: () {},
+              textColor: colors.text,
+              iconColor: colors.icon,
+            ),
+            _ContextMenuItem(
+              icon: Icons.edit,
+              label: 'Rename Folder',
+              onTap: () {},
+              textColor: colors.text,
+              iconColor: colors.icon,
+            ),
+          ],
+        ),
+      ),
+      childBuilder: (context) => _ContextMenuGestureDetector(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Section header
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -847,18 +688,16 @@ class _EmailSection extends StatelessWidget {
                 ),
               ),
             ),
-            // Section emails (Layer 3)
-            ...emails.map(
+            ...filteredEmails.map(
               (entry) => _EmailItem(
                 email: entry.value,
                 isSelected: selectedEmails.contains(entry.key),
-                onTap: () => onTap(entry),
-                onStar: () => onStar(entry),
-                onArchive: () => onArchive(entry),
-                onDelete: () => onDelete(entry),
-                onMarkAsRead: () => onMarkAsRead(entry),
-                onMarkAsUnread: () => onMarkAsUnread(entry),
-                onMute: () => onMute(entry),
+                onTap: () => onToggleSelection(entry.key),
+                onStar: () => onToggleStar(entry.key),
+                onArchive: () => onArchive(entry.key),
+                onDelete: () => onDelete(entry.key),
+                onMarkAsRead: () => onMarkAsRead(entry.key),
+                onMarkAsUnread: () => onMarkAsUnread(entry.key),
               ),
             ),
           ],
@@ -886,7 +725,10 @@ class _ContextMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        context.hideMenu();
+        onTap();
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
@@ -906,3 +748,114 @@ class _ContextMenuItem extends StatelessWidget {
     );
   }
 }
+
+class _Email {
+  const _Email({
+    required this.sender,
+    required this.subject,
+    required this.preview,
+    required this.time,
+    this.isRead = false,
+    this.isStarred = false,
+  });
+
+  final String sender;
+  final String subject;
+  final String preview;
+  final String time;
+  final bool isRead;
+  final bool isStarred;
+
+  _Email copyWith({
+    String? sender,
+    String? subject,
+    String? preview,
+    String? time,
+    bool? isRead,
+    bool? isStarred,
+  }) {
+    return _Email(
+      sender: sender ?? this.sender,
+      subject: subject ?? this.subject,
+      preview: preview ?? this.preview,
+      time: time ?? this.time,
+      isRead: isRead ?? this.isRead,
+      isStarred: isStarred ?? this.isStarred,
+    );
+  }
+}
+
+class _MenuColorScheme {
+  const _MenuColorScheme({
+    required this.background,
+    required this.border,
+    required this.header,
+    required this.text,
+    required this.icon,
+    this.divider,
+  });
+
+  final Color background;
+  final Color border;
+  final Color header;
+  final Color text;
+  final Color icon;
+  final Color? divider;
+
+  static final green = _MenuColorScheme(
+    background: Colors.green[50]!,
+    border: Colors.green[300]!,
+    header: Colors.green[600]!,
+    text: Colors.green[900]!,
+    icon: Colors.green[700]!,
+    divider: Colors.green[200],
+  );
+
+  static final orange = _MenuColorScheme(
+    background: Colors.orange[50]!,
+    border: Colors.orange[300]!,
+    header: Colors.orange[600]!,
+    text: Colors.orange[900]!,
+    icon: Colors.orange[700]!,
+    divider: Colors.orange[200],
+  );
+
+  static final workspace = _MenuColorScheme(
+    background: Colors.grey[900]!,
+    border: Colors.grey[700]!,
+    header: Colors.blue[700]!,
+    text: Colors.white,
+    icon: Colors.blue[300]!,
+    divider: Colors.grey[700],
+  );
+}
+
+final _sampleEmails = [
+  const _Email(
+    sender: 'Google Cloud',
+    subject: 'Your monthly invoice is ready',
+    preview: 'View your Google Cloud invoice for the month of October...',
+    time: '10:30 AM',
+    isStarred: true,
+  ),
+  const _Email(
+    sender: 'GitHub',
+    subject: 'New security vulnerability detected',
+    preview: 'We found a potential security vulnerability in one of your...',
+    time: '9:15 AM',
+  ),
+  const _Email(
+    sender: 'Sarah Johnson',
+    subject: 'Re: Project proposal review',
+    preview: 'Thanks for sending over the proposal. I had a chance to...',
+    time: 'Yesterday',
+    isRead: true,
+  ),
+  const _Email(
+    sender: 'Team Calendar',
+    subject: 'Reminder: Sprint planning tomorrow',
+    preview: 'Your sprint planning meeting is scheduled for tomorrow at...',
+    time: 'Yesterday',
+    isRead: true,
+  ),
+];
