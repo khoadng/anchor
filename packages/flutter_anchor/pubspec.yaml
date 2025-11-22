@@ -20,7 +20,7 @@ dependencies:
   anchor: ^0.0.7
   flutter:
     sdk: flutter
-  meta: ^1.16.0
+  meta: ^1.15.0
 
 dev_dependencies:
   flutter_test:

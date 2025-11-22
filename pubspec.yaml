@@ -10,3 +10,4 @@ workspace:
   - packages/anchor_ui/example
   - packages/flutter_anchor
   - packages/flutter_anchor/example
+  - packages/demo_web

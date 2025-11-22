@@ -35,7 +35,14 @@ class _BackdropClipper extends CustomClipper<Path> {
 }
 
 class GridDemo extends StatelessWidget {
-  const GridDemo({super.key});
+  const GridDemo({
+    super.key,
+    this.itemCount = 30,
+    this.crossAxisCount = 3,
+  });
+
+  final int itemCount;
+  final int crossAxisCount;
 
   @override
   Widget build(BuildContext context) {
@@ -43,12 +50,12 @@ class GridDemo extends StatelessWidget {
       appBar: AppBar(title: const Text('Grid Demo')),
       body: GridView.builder(
         padding: const EdgeInsets.all(8),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
           mainAxisSpacing: 8,
           crossAxisSpacing: 8,
         ),
-        itemCount: 30,
+        itemCount: itemCount,
         itemBuilder: (context, index) {
           final colors = [
             Colors.red,

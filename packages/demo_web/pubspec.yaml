@@ -1,5 +1,5 @@
-name: flutter_anchor_example
-description: "A new Flutter project."
+name: demo_web
+description: Anchor packages demo showcase for web
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -11,8 +11,11 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  flutter_anchor:
-
+  anchor_ui_example:
+    path: ../anchor_ui/example
+  flutter_anchor_example:
+    path: ../flutter_anchor/example
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:
