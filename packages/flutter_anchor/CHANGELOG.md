@@ -1,3 +1,6 @@
+## 0.0.13
+* Fix various issues
+
 ## 0.0.12
 * Remove debounce on focus trigger
 
