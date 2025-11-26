@@ -6,6 +6,8 @@ Core Flutter widgets for the Anchor overlay system. This package provides the fo
 
 **Note:** This package provides the core *functionality* (triggers, positioning) but *no* default styling. If you are looking for common pre-styled containers, like tooltips with arrows, see the **[`anchor_ui`](../anchor_ui) package.**
 
+**[Try the interactive demo](https://khoadng.github.io/anchor/)**
+
 -----
 
 ## What's Included

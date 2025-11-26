@@ -8,6 +8,8 @@ These widgets are built on top of the `flutter_anchor` package and provide conve
 
 If you need to build a completely custom UI, you may want to use `Anchor` or `RawAnchor` directly from the `flutter_anchor` package.
 
+**[Try the interactive demo](https://khoadng.github.io/anchor/)**
+
 -----
 
 ## What's Included

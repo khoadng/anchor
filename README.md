@@ -6,6 +6,8 @@ Anchor is a headless overlay toolkit for Flutter. Anchor makes it easy to create
 
 Its core positioning engine is inspired by the powerful JavaScript library [Floating UI](https://floating-ui.com/) and provides a similar, extensible architecture in pure Dart.
 
+**[Try the interactive demo](https://khoadng.github.io/anchor/)**
+
 -----
 
 ## Packages in this Monorepo
