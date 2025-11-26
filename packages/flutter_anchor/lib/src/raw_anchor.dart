@@ -209,6 +209,7 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
     super.initState();
     _pipeline = PositioningPipeline(middlewares: widget.middlewares);
     _controller.addListener(_handleControllerChange);
+    _controller.recalculateNotifier.addListener(_handleRecalculate);
   }
 
   @override
@@ -216,7 +217,10 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_handleControllerChange);
+      oldWidget.controller.recalculateNotifier
+          .removeListener(_handleRecalculate);
       _controller.addListener(_handleControllerChange);
+      _controller.recalculateNotifier.addListener(_handleRecalculate);
     }
     if (MiddlewareUtils.haveMiddlewaresChanged(
       oldWidget.middlewares,
@@ -259,6 +263,7 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
   @override
   void dispose() {
     _controller.removeListener(_handleControllerChange);
+    _controller.recalculateNotifier.removeListener(_handleRecalculate);
     _scrollPosition?.removeListener(_handleScroll);
     super.dispose();
   }
@@ -278,6 +283,12 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
       handleShowRequest();
     } else {
       handleHideRequest();
+    }
+  }
+
+  void _handleRecalculate() {
+    if (_overlayController.isShowing) {
+      _calculateAnchorPoints();
     }
   }
 

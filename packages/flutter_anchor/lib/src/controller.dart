@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:meta/meta.dart';
 
 import 'anchor.dart';
 
@@ -8,6 +9,12 @@ import 'anchor.dart';
 /// an overlay.
 class AnchorController extends ChangeNotifier {
   var _isShowing = false;
+
+  final _recalculateNotifier = ChangeNotifier();
+
+  /// Internal notifier for recalculation requests.
+  @internal
+  ChangeNotifier get recalculateNotifier => _recalculateNotifier;
 
   /// Whether the overlay is currently showing.
   bool get isShowing => _isShowing;
@@ -28,5 +35,16 @@ class AnchorController extends ChangeNotifier {
   void toggle() {
     _isShowing = !_isShowing;
     notifyListeners();
+  }
+
+  /// Triggers a recalculation of the overlay position.
+  void recalculate() {
+    _recalculateNotifier.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _recalculateNotifier.dispose();
+    super.dispose();
   }
 }
