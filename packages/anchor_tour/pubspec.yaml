@@ -1,13 +1,13 @@
-name: flutter_anchor
-description: A Flutter package for dynamic anchored overlays, including tooltips, popovers, and more
-version: 0.0.13
+name: anchor_tour
+description: Guided tours and coach marks built on top of flutter_anchor.
+version: 0.0.1
 homepage: https://github.com/khoadng/anchor
 repository: https://github.com/khoadng/anchor
 issue_tracker: https://github.com/khoadng/anchor/issues
 topics:
-  - tooltip
-  - popover
-  - context-menu
+  - tour
+  - coach-mark
+  - onboarding
   - overlay
 
 environment:
@@ -17,9 +17,9 @@ environment:
 resolution: workspace
 
 dependencies:
-  anchor: ^0.0.7
   flutter:
     sdk: flutter
+  flutter_anchor: ^0.0.13
   meta: ^1.15.0
 
 dev_dependencies:

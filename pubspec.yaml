@@ -1,13 +1,14 @@
-name: workspace
+name: anchor_workspace
 publish_to: none
 
 environment:
-  sdk: ^3.5.0
+  sdk: ">=3.5.0 <4.0.0"
 
 workspace:
   - packages/anchor
+  - packages/anchor_tour
   - packages/anchor_ui
-  - packages/anchor_ui/example
   - packages/flutter_anchor
   - packages/flutter_anchor/example
+  - packages/anchor_ui/example
   - packages/demo_web
