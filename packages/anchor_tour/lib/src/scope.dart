@@ -40,7 +40,7 @@ class AnchorTourScope extends StatefulWidget {
   State<AnchorTourScope> createState() => AnchorTourScopeState();
 }
 
-@internal
+@meta.internal
 class AnchorTourScopeState extends State<AnchorTourScope> {
   final Map<String, Set<AnchorTourTargetRegistration>> _targets = {};
   final Map<String, List<Completer<void>>> _targetWaiters = {};
@@ -491,7 +491,7 @@ class AnchorTourScopeState extends State<AnchorTourScope> {
   }
 }
 
-@internal
+@meta.internal
 class AnchorTourHost extends InheritedWidget {
   const AnchorTourHost({
     super.key,
@@ -513,7 +513,7 @@ class AnchorTourHost extends InheritedWidget {
   }
 }
 
-@internal
+@meta.internal
 class AnchorTourTargetRegistration {
   const AnchorTourTargetRegistration({
     required this.id,
