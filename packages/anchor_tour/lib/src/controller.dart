@@ -1,6 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart'
+    show ChangeNotifier, ValueListenable, ValueNotifier;
+import 'package:meta/meta.dart' show internal;
 
 import 'scope.dart';
 import 'state.dart';
