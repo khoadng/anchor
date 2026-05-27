@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:anchor_tour/anchor_tour.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -85,6 +87,66 @@ void main() {
 
     expect(controller.value.status, AnchorTourStatus.finished);
     expect(controller.value.activeStepId, isNull);
+  });
+
+  testWidgets('keeps the previous overlay visible while resolving next step',
+      (tester) async {
+    final controller = AnchorTourController();
+    final resolveSecond = Completer<void>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnchorTourScope(
+          controller: controller,
+          steps: [
+            AnchorTourStep(
+              id: 'first',
+              target: 'one',
+              builder: (context, tour) => TextButton(
+                onPressed: tour.next,
+                child: const Text('First step'),
+              ),
+            ),
+            AnchorTourStep(
+              id: 'second',
+              target: 'two',
+              enter: (context, tour) => resolveSecond.future,
+              builder: (context, tour) => const Text('Second step'),
+            ),
+          ],
+          child: const Column(
+            children: [
+              AnchorTourTarget(
+                id: 'one',
+                child: SizedBox(width: 80, height: 40, child: Text('One')),
+              ),
+              AnchorTourTarget(
+                id: 'two',
+                child: SizedBox(width: 80, height: 40, child: Text('Two')),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final start = controller.start();
+    await _pumpTour(tester);
+    await start;
+
+    await tester.tap(find.text('First step'));
+    await tester.pump();
+
+    expect(controller.value.status, AnchorTourStatus.resolving);
+    expect(controller.value.activeStepId, 'second');
+    expect(find.text('First step'), findsOneWidget);
+    expect(find.text('Second step'), findsNothing);
+
+    resolveSecond.complete();
+    await _pumpTour(tester);
+
+    expect(controller.value.status, AnchorTourStatus.showing);
+    expect(find.text('Second step'), findsOneWidget);
   });
 
   testWidgets('runs enter before resolving a target', (tester) async {
