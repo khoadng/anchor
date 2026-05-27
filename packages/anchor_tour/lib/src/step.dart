@@ -32,6 +32,7 @@ class AnchorTourStep {
     this.exit,
     this.placement = Placement.bottom,
     this.spacing = 12,
+    this.offset,
     this.spotlight,
     this.viewPadding,
     this.scrollBehavior,
@@ -45,6 +46,7 @@ class AnchorTourStep {
   final AnchorTourStepCallback? exit;
   final Placement placement;
   final double spacing;
+  final Offset? offset;
   final AnchorTourSpotlight? spotlight;
   final EdgeInsets? viewPadding;
   final AnchorScrollBehavior? scrollBehavior;
