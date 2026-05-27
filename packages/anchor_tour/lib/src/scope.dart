@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:math' as math;
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter_anchor/flutter_anchor.dart';
 import 'package:meta/meta.dart' as meta;
 
 import 'controller.dart';
 import 'diagnostics.dart';
+import 'spotlight.dart';
 import 'state.dart';
 import 'step.dart';
 
@@ -42,6 +46,7 @@ class AnchorTourScope extends StatefulWidget {
 
 @meta.internal
 class AnchorTourScopeState extends State<AnchorTourScope> {
+  final GlobalKey _overlayKey = GlobalKey();
   final Map<String, Set<AnchorTourTargetRegistration>> _targets = {};
   final Map<String, List<Completer<void>>> _targetWaiters = {};
   final Set<String> _pendingDuplicateChecks = {};
@@ -294,9 +299,8 @@ class AnchorTourScopeState extends State<AnchorTourScope> {
     final resolved = await _resolveTarget(step, token: token);
     if (!resolved || token != _runToken || !mounted) return;
 
-    if (_visibleIndex != index) {
-      _pendingVisibleIndex = index;
-    }
+    _visibleIndex = index;
+    _pendingVisibleIndex = -1;
     _publishState(_state.copyWith(
       status: AnchorTourStatus.showing,
       activeStepId: step.id,
@@ -312,14 +316,6 @@ class AnchorTourScopeState extends State<AnchorTourScope> {
     final index =
         widget.steps.indexWhere((candidate) => candidate.id == step.id);
     if (index < 0 || index != _pendingVisibleIndex) return;
-
-    final previousTarget = _visibleStep?.target;
-    if (previousTarget != null && previousTarget != step.target) {
-      for (final target in _targets[previousTarget] ??
-          const <AnchorTourTargetRegistration>{}) {
-        target.hideOverlay();
-      }
-    }
 
     _pendingVisibleIndex = -1;
     _visibleIndex = index;
@@ -345,7 +341,7 @@ class AnchorTourScopeState extends State<AnchorTourScope> {
 
     while (mounted && token == _runToken) {
       await WidgetsBinding.instance.endOfFrame;
-      if (_hasEnabledTarget(step.target)) return true;
+      if (_resolvedTarget(step.target) != null) return true;
 
       if (!notifiedTargetNotFound) {
         notifiedTargetNotFound = true;
@@ -434,8 +430,13 @@ class AnchorTourScopeState extends State<AnchorTourScope> {
     }
   }
 
-  bool _hasEnabledTarget(String targetId) {
-    return _targets[targetId]?.any((target) => target.enabled) ?? false;
+  AnchorTourTargetRegistration? _resolvedTarget(String targetId) {
+    for (final target
+        in _targets[targetId] ?? const <AnchorTourTargetRegistration>{}) {
+      if (!target.enabled) continue;
+      if (target.rect != null) return target;
+    }
+    return null;
   }
 
   void _notifyTargetWaiters(String targetId) {
@@ -483,11 +484,330 @@ class AnchorTourScopeState extends State<AnchorTourScope> {
 
   @override
   Widget build(BuildContext context) {
+    final overlayStep = switch (_state.status) {
+      AnchorTourStatus.showing => _activeStep,
+      AnchorTourStatus.resolving => _visibleStep,
+      _ => null,
+    };
+
     return AnchorTourHost(
       scope: this,
       state: _state,
-      child: widget.child,
+      child: Stack(
+        key: _overlayKey,
+        fit: StackFit.passthrough,
+        children: [
+          widget.child,
+          if (overlayStep != null)
+            Positioned.fill(
+              child: _AnchorTourOverlay(
+                key: ValueKey(overlayStep.id),
+                scope: this,
+                step: overlayStep,
+                targetRect: _resolvedTarget(overlayStep.target)?.rect,
+              ),
+            ),
+        ],
+      ),
     );
+  }
+
+  Rect? globalRectToLocal(Rect? globalRect) {
+    final renderObject =
+        _overlayKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderObject == null || globalRect == null) return null;
+
+    final topLeft = renderObject.globalToLocal(globalRect.topLeft);
+    final topRight = renderObject.globalToLocal(globalRect.topRight);
+    final bottomLeft = renderObject.globalToLocal(globalRect.bottomLeft);
+    final bottomRight = renderObject.globalToLocal(globalRect.bottomRight);
+    return Rect.fromLTRB(
+      math.min(
+        math.min(topLeft.dx, topRight.dx),
+        math.min(bottomLeft.dx, bottomRight.dx),
+      ),
+      math.min(
+        math.min(topLeft.dy, topRight.dy),
+        math.min(bottomLeft.dy, bottomRight.dy),
+      ),
+      math.max(
+        math.max(topLeft.dx, topRight.dx),
+        math.max(bottomLeft.dx, bottomRight.dx),
+      ),
+      math.max(
+        math.max(topLeft.dy, topRight.dy),
+        math.max(bottomLeft.dy, bottomRight.dy),
+      ),
+    );
+  }
+
+  Offset localToGlobal(Offset localOffset) {
+    final renderObject =
+        _overlayKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderObject == null) return localOffset;
+    return renderObject.localToGlobal(localOffset);
+  }
+}
+
+class _AnchorTourOverlay extends StatefulWidget {
+  const _AnchorTourOverlay({
+    super.key,
+    required this.scope,
+    required this.step,
+    required this.targetRect,
+  });
+
+  final AnchorTourScopeState scope;
+  final AnchorTourStep step;
+  final Rect? targetRect;
+
+  @override
+  State<_AnchorTourOverlay> createState() => _AnchorTourOverlayState();
+}
+
+class _AnchorTourOverlayState extends State<_AnchorTourOverlay> {
+  Size? _contentSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final step = widget.step;
+    final scope = widget.scope;
+    final targetGlobalRect = widget.targetRect;
+    final targetRect = scope.globalRectToLocal(targetGlobalRect);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final viewportSize = constraints.biggest;
+        final geometry = _geometryFor(
+          step: step,
+          targetRect: targetRect,
+          targetGlobalRect: targetGlobalRect,
+          viewportSize: viewportSize,
+          contentSize: _contentSize,
+          context: context,
+        );
+
+        Widget content;
+        try {
+          content = step.builder(
+            context,
+            AnchorTourContext(
+              controller: scope.widget.controller,
+              state: scope.widget.controller.value,
+              step: step,
+              targetRect: targetGlobalRect,
+              overlayRect: geometry.globalOverlayRect,
+              direction: geometry.direction,
+              hasNext: scope.hasNextStep(step),
+              hasPrevious: scope.hasPreviousStep(step),
+            ),
+          );
+        } catch (error, stackTrace) {
+          scope.widget.onDiagnostic?.call(AnchorTourDiagnosticEvent(
+            kind: AnchorTourDiagnosticKind.builderThrew,
+            step: step,
+            targetId: step.target,
+            error: error,
+            stackTrace: stackTrace,
+          ));
+          rethrow;
+        }
+
+        final positionedContent = Positioned(
+          left: geometry.position.dx,
+          top: geometry.position.dy,
+          child: Opacity(
+            opacity: _contentSize == null ? 0 : 1,
+            child: _MeasureSize(
+              onChange: (size) {
+                if (!mounted) return;
+                if (_contentSize == size) return;
+                setState(() {
+                  _contentSize = size;
+                });
+              },
+              child: TooltipVisibility(
+                visible: false,
+                child: content,
+              ),
+            ),
+          ),
+        );
+
+        return IgnorePointer(
+          ignoring: !scope.isStepInteractive(step),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: AnchorTourSpotlightBackdrop(
+                  targetRect: targetGlobalRect,
+                  spotlight: step.spotlight ?? AnchorTourSpotlight.defaults,
+                ),
+              ),
+              positionedContent,
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  _OverlayGeometry _geometryFor({
+    required AnchorTourStep step,
+    required Rect? targetRect,
+    required Rect? targetGlobalRect,
+    required Size viewportSize,
+    required Size? contentSize,
+    required BuildContext context,
+  }) {
+    final target = targetRect ?? Rect.zero;
+    final effectiveContentSize = contentSize ?? Size.zero;
+
+    final pipeline = PositioningPipeline(
+      middlewares: step.middlewares ?? _defaultMiddlewares(step),
+    );
+    final result = pipeline.run(
+      config: PositioningConfig(
+        childPosition: target.topLeft,
+        childSize: target.size,
+        viewportSize: viewportSize,
+        overlayWidth: contentSize?.width,
+        overlayHeight: contentSize?.height,
+        padding: step.viewPadding ?? _defaultViewPadding(context),
+        placement: step.placement,
+      ),
+    );
+    var points = result.state.anchorPoints;
+
+    if (step.offset case final offset?) {
+      points = points.copyWith(offset: points.offset + offset);
+    }
+
+    final position = _overlayPosition(
+      target: target,
+      contentSize: effectiveContentSize,
+      points: points,
+    );
+    final overlayRect = position & effectiveContentSize;
+    final globalOverlayRect = Rect.fromLTWH(
+      widget.scope.localToGlobal(overlayRect.topLeft).dx,
+      widget.scope.localToGlobal(overlayRect.topLeft).dy,
+      overlayRect.width,
+      overlayRect.height,
+    );
+
+    return _OverlayGeometry(
+      position: position,
+      globalOverlayRect: contentSize == null ? null : globalOverlayRect,
+      direction: _directionFor(points),
+    );
+  }
+
+  List<PositioningMiddleware> _defaultMiddlewares(AnchorTourStep step) {
+    return [
+      OffsetMiddleware(mainAxis: OffsetValue.value(step.spacing)),
+      const FlipMiddleware(),
+      const ShiftMiddleware(),
+    ];
+  }
+
+  EdgeInsets _defaultViewPadding(BuildContext context) {
+    final viewPadding = MediaQuery.viewPaddingOf(context);
+    final viewInsets = MediaQuery.viewInsetsOf(context);
+    return EdgeInsets.fromLTRB(
+      viewPadding.left + viewInsets.left + 12,
+      viewPadding.top + viewInsets.top + 12,
+      viewPadding.right + viewInsets.right + 12,
+      viewPadding.bottom + viewInsets.bottom + 12,
+    );
+  }
+
+  Offset _overlayPosition({
+    required Rect target,
+    required Size contentSize,
+    required AnchorPoints points,
+  }) {
+    final childAnchor = _pointFor(target, points.childAnchor);
+    final overlayAnchor = Offset(
+      (points.overlayAnchor.x + 1) * contentSize.width / 2,
+      (points.overlayAnchor.y + 1) * contentSize.height / 2,
+    );
+    return childAnchor + points.offset - overlayAnchor;
+  }
+
+  Offset _pointFor(Rect rect, Alignment alignment) {
+    return Offset(
+      rect.left + (alignment.x + 1) * rect.width / 2,
+      rect.top + (alignment.y + 1) * rect.height / 2,
+    );
+  }
+
+  AxisDirection _directionFor(AnchorPoints points) {
+    if (points.isAbove) return AxisDirection.up;
+    if (points.isBelow) return AxisDirection.down;
+    if (points.isLeft) return AxisDirection.left;
+    return AxisDirection.right;
+  }
+}
+
+class _OverlayGeometry {
+  const _OverlayGeometry({
+    required this.position,
+    required this.globalOverlayRect,
+    required this.direction,
+  });
+
+  final Offset position;
+  final Rect? globalOverlayRect;
+  final AxisDirection direction;
+}
+
+class _MeasureSize extends SingleChildRenderObjectWidget {
+  const _MeasureSize({
+    required this.onChange,
+    required super.child,
+  });
+
+  final ValueChanged<Size> onChange;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) {
+    return _RenderMeasureSize(onChange: onChange);
+  }
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderMeasureSize renderObject,
+  ) {
+    renderObject.onChange = onChange;
+  }
+}
+
+class _RenderMeasureSize extends RenderProxyBox {
+  _RenderMeasureSize({required ValueChanged<Size> onChange})
+      : _onChange = onChange;
+
+  ValueChanged<Size> _onChange;
+  ValueChanged<Size> get onChange => _onChange;
+  set onChange(ValueChanged<Size> value) {
+    if (_onChange == value) return;
+    _onChange = value;
+  }
+
+  Size? _previousSize;
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    final currentSize = size;
+    if (_previousSize == currentSize) return;
+
+    _previousSize = currentSize;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      onChange(currentSize);
+    });
   }
 }
 
@@ -518,10 +838,12 @@ class AnchorTourTargetRegistration {
   const AnchorTourTargetRegistration({
     required this.id,
     required this.enabled,
-    required this.hideOverlay,
+    required this.rectGetter,
   });
 
   final String id;
   final bool enabled;
-  final VoidCallback hideOverlay;
+  final Rect? Function() rectGetter;
+
+  Rect? get rect => rectGetter();
 }
