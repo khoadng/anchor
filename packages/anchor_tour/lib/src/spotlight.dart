@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 enum AnchorTourSpotlightShape {
@@ -62,28 +64,116 @@ class AnchorTourSpotlightBackdrop extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: CustomPaint(
-        painter: _SpotlightPainter(
-          targetRect: targetRect,
+      child: SizedBox.expand(
+        child: _SpotlightPaintBox(
+          targetGlobalRect: targetRect,
           spotlight: spotlight,
         ),
-        child: const SizedBox.expand(),
       ),
     );
   }
 }
 
-class _SpotlightPainter extends CustomPainter {
-  const _SpotlightPainter({
-    required this.targetRect,
+class _SpotlightPaintBox extends LeafRenderObjectWidget {
+  const _SpotlightPaintBox({
+    required this.targetGlobalRect,
     required this.spotlight,
   });
 
-  final Rect? targetRect;
+  final Rect? targetGlobalRect;
   final AnchorTourSpotlight spotlight;
 
   @override
-  void paint(Canvas canvas, Size size) {
+  RenderObject createRenderObject(BuildContext context) {
+    return _RenderSpotlightPaintBox(
+      targetGlobalRect: targetGlobalRect,
+      spotlight: spotlight,
+    );
+  }
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    covariant _RenderSpotlightPaintBox renderObject,
+  ) {
+    renderObject
+      ..targetGlobalRect = targetGlobalRect
+      ..spotlight = spotlight;
+  }
+}
+
+class _RenderSpotlightPaintBox extends RenderBox {
+  _RenderSpotlightPaintBox({
+    required Rect? targetGlobalRect,
+    required AnchorTourSpotlight spotlight,
+  })  : _targetGlobalRect = targetGlobalRect,
+        _spotlight = spotlight;
+
+  Rect? _targetGlobalRect;
+  AnchorTourSpotlight _spotlight;
+
+  @override
+  void performLayout() {
+    size = constraints.biggest;
+  }
+
+  Rect? get targetGlobalRect => _targetGlobalRect;
+  set targetGlobalRect(Rect? value) {
+    if (_targetGlobalRect == value) return;
+    _targetGlobalRect = value;
+    markNeedsPaint();
+  }
+
+  AnchorTourSpotlight get spotlight => _spotlight;
+  set spotlight(AnchorTourSpotlight value) {
+    if (_spotlight == value) return;
+    _spotlight = value;
+    markNeedsPaint();
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    final canvas = context.canvas;
+    canvas.save();
+    canvas.translate(offset.dx, offset.dy);
+    _paintSpotlight(canvas, size, _targetLocalRect, spotlight);
+    canvas.restore();
+  }
+
+  Rect? get _targetLocalRect {
+    final target = targetGlobalRect;
+    if (target == null) return null;
+
+    final topLeft = globalToLocal(target.topLeft);
+    final topRight = globalToLocal(target.topRight);
+    final bottomLeft = globalToLocal(target.bottomLeft);
+    final bottomRight = globalToLocal(target.bottomRight);
+    return Rect.fromLTRB(
+      math.min(
+        math.min(topLeft.dx, topRight.dx),
+        math.min(bottomLeft.dx, bottomRight.dx),
+      ),
+      math.min(
+        math.min(topLeft.dy, topRight.dy),
+        math.min(bottomLeft.dy, bottomRight.dy),
+      ),
+      math.max(
+        math.max(topLeft.dx, topRight.dx),
+        math.max(bottomLeft.dx, bottomRight.dx),
+      ),
+      math.max(
+        math.max(topLeft.dy, topRight.dy),
+        math.max(bottomLeft.dy, bottomRight.dy),
+      ),
+    );
+  }
+
+  void _paintSpotlight(
+    Canvas canvas,
+    Size size,
+    Rect? targetRect,
+    AnchorTourSpotlight spotlight,
+  ) {
     final viewport = Offset.zero & size;
     final target = targetRect;
     final paint = Paint()
@@ -121,11 +211,5 @@ class _SpotlightPainter extends CustomPainter {
       ..addPath(hole, Offset.zero);
 
     canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SpotlightPainter oldDelegate) {
-    return oldDelegate.targetRect != targetRect ||
-        oldDelegate.spotlight != spotlight;
   }
 }
