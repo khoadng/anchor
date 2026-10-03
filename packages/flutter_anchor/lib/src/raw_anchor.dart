@@ -175,6 +175,7 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
   final _layerLink = LayerLink();
 
   Size? _lastScreenSize;
+  EdgeInsets _systemInsets = EdgeInsets.zero;
   ScrollPosition? _scrollPosition;
 
   Size? _measuredOverlaySize;
@@ -360,7 +361,7 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
       viewportSize: screenSize,
       overlayHeight: effectiveOverlayHeight,
       overlayWidth: effectiveOverlayWidth,
-      padding: widget.viewPadding ?? EdgeInsets.zero,
+      padding: _systemInsets + (widget.viewPadding ?? EdgeInsets.zero),
       placement: widget.placement,
     );
 
@@ -402,6 +403,21 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
     return (newPoints, geometry, result.metadata);
   }
 
+  /// Keeps the overlay clear of system UI and the on-screen keyboard. They are
+  /// read from the overlay's context because the anchor's own subtree may have
+  /// removed them, e.g. a Scaffold body that resizes for the keyboard.
+  void _syncSystemInsets(BuildContext overlayContext) {
+    final padding = MediaQuery.paddingOf(overlayContext);
+    final keyboard = MediaQuery.viewInsetsOf(overlayContext).bottom;
+    final insets = padding.copyWith(
+      bottom: padding.bottom > keyboard ? padding.bottom : keyboard,
+    );
+    if (insets == _systemInsets) return;
+
+    _systemInsets = insets;
+    _calculateAnchorPoints(notify: false);
+  }
+
   void _handleScroll() {
     if (!_overlayController.isShowing) return;
 
@@ -440,6 +456,7 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
     return OverlayPortal(
       controller: _overlayController,
       overlayChildBuilder: (context) {
+        _syncSystemInsets(context);
         return AnchorData(
           controller: _controller,
           geometry: _geometry,
