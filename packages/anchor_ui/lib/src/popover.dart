@@ -30,6 +30,7 @@ class AnchorPopover extends StatelessWidget {
     this.onShow,
     this.onHide,
     this.enabled,
+    this.fitToAvailableSpace = false,
     required this.overlayBuilder,
     required this.child,
   });
@@ -103,6 +104,12 @@ class AnchorPopover extends StatelessWidget {
   /// {@macro anchor_enabled}
   final bool? enabled;
 
+  /// Limits the popover to the space between its anchor and the viewport
+  /// edge, so tall content stays reachable above the keyboard or screen edge.
+  ///
+  /// The overlay content should scroll when it can be taller than that space.
+  final bool fitToAvailableSpace;
+
   @override
   Widget build(BuildContext context) {
     return Anchor(
@@ -143,6 +150,7 @@ class AnchorPopover extends StatelessWidget {
       OffsetMiddleware(mainAxis: OffsetValue.value(spacing ?? 4)),
       const FlipMiddleware(),
       const ShiftMiddleware(),
+      if (fitToAvailableSpace) const SizeMiddleware(),
       ArrowMiddleware(
         arrowSize: arrowSize ?? const Size(20, 10),
       ),
