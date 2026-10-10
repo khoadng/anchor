@@ -1,3 +1,7 @@
+## 0.0.14
+* Add `requirePointerMovement` and `restTolerance` to the hover trigger
+* Add `AnchorHoverGroup` to skip the hover wait while moving between anchors
+
 ## 0.0.13
 * Fix various issues
 

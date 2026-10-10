@@ -78,6 +78,28 @@ Anchor(
 )
 ```
 
+#### Hover Trigger in Dense Layouts (e.g., Image Grid)
+
+When items sit edge to edge, the pointer is almost always over one of them, so a plain hover delay fires constantly. Ask for a deliberate hover instead, and wrap the items in an `AnchorHoverGroup` so moving between them skips the wait once the user is browsing.
+
+```dart
+AnchorHoverGroup(
+  child: GridView.builder(
+    itemBuilder: (context, index) => Anchor(
+      triggerMode: const AnchorTriggerMode.hover(
+        waitDuration: Duration(milliseconds: 800),
+        // Ignore items that scroll under a still pointer.
+        requirePointerMovement: true,
+        // Only show once the pointer comes to rest.
+        restTolerance: 6,
+      ),
+      overlayBuilder: (context) => _buildDetails(index),
+      child: _buildThumbnail(index),
+    ),
+  ),
+)
+```
+
 -----
 
 ## Advanced Customization

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import 'controller.dart' show AnchorController;
+import 'hover_group.dart' show AnchorHoverGroup;
 
 /// {@template anchor_trigger_mode}
 /// Defines what user action triggers the anchor's overlay to show and hide.
@@ -14,6 +15,8 @@ sealed class AnchorTriggerMode {
   const factory AnchorTriggerMode.hover({
     Duration? waitDuration,
     Duration? debounceDuration,
+    double? restTolerance,
+    bool? requirePointerMovement,
   }) = HoverTriggerMode;
 
   /// {@macro tap_trigger_mode}
@@ -46,12 +49,20 @@ sealed class AnchorTriggerMode {
 ///
 /// Shows the anchor's overlay on mouse enter and hides on mouse exit.
 ///
+/// When anchors sit edge to edge, such as items in a dense grid, the pointer
+/// is almost always over one of them. [requirePointerMovement] and
+/// [restTolerance] make the overlay wait for a deliberate hover instead of
+/// firing for whatever happens to be under the pointer. Wrap the anchors in an
+/// [AnchorHoverGroup] to skip the wait while the user moves between them.
+///
 /// {@endtemplate}
 class HoverTriggerMode extends AnchorTriggerMode {
   /// Creates a hover trigger mode.
   const HoverTriggerMode({
     this.waitDuration,
     this.debounceDuration,
+    this.restTolerance,
+    this.requirePointerMovement,
   });
 
   /// The delay before the overlay is shown after the mouse enters.
@@ -66,6 +77,26 @@ class HoverTriggerMode extends AnchorTriggerMode {
   ///
   /// Defaults to 50 milliseconds.
   final Duration? debounceDuration;
+
+  /// How far, in logical pixels, the pointer may drift while [waitDuration]
+  /// runs.
+  ///
+  /// Moving farther restarts the wait, so the overlay only shows once the
+  /// pointer comes to rest. Sweeping across the child never shows it.
+  ///
+  /// Defaults to `null`, where the wait runs from the moment the pointer
+  /// enters regardless of movement.
+  final double? restTolerance;
+
+  /// Whether the pointer itself has to move over the child to start the wait.
+  ///
+  /// Content can slide under a still pointer when it scrolls or its layout
+  /// changes. That still counts as entering the child, but says nothing about
+  /// what the user wants. When this is `true`, such an enter is ignored until
+  /// the pointer moves, and scrolling over the child cancels a pending show.
+  ///
+  /// Defaults to `false`.
+  final bool? requirePointerMovement;
 }
 
 /// {@macro anchor_trigger_mode}

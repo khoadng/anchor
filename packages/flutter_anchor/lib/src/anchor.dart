@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:anchor/anchor.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'config.dart';
 import 'controller.dart';
 import 'data.dart';
+import 'hover_group.dart';
 import 'raw_anchor.dart';
 import 'trigger.dart';
 
@@ -124,6 +126,13 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
   Timer? _showTimer;
   Timer? _hideTimer;
 
+  // Whether the current hover has already started a wait to show.
+  var _hoverArmed = false;
+  Offset? _restOrigin;
+
+  AnchorHoverGroupState? _hoverGroup;
+  var _isShownInHoverGroup = false;
+
   AnchorController? _internalController;
   FocusNode? _internalFocusNode;
   late final AnimationController _animationController;
@@ -149,6 +158,17 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
   Duration get _effectiveDebounceDuration => switch (_effectiveTriggerMode) {
         HoverTriggerMode(:final debounceDuration?) => debounceDuration,
         _ => _defaultDebounceDuration,
+      };
+
+  double? get _effectiveRestTolerance => switch (_effectiveTriggerMode) {
+        HoverTriggerMode(:final restTolerance) => restTolerance,
+        _ => null,
+      };
+
+  bool get _effectiveRequirePointerMovement => switch (_effectiveTriggerMode) {
+        HoverTriggerMode(:final requirePointerMovement?) =>
+          requirePointerMovement,
+        _ => false,
       };
 
   bool get _effectiveConsumeOutsideTap => switch (_effectiveTriggerMode) {
@@ -179,6 +199,17 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final group = AnchorHoverGroup.maybeOf(context);
+    if (group == _hoverGroup) return;
+    final wasShown = _isShownInHoverGroup;
+    _leaveHoverGroup();
+    _hoverGroup = group;
+    if (wasShown) _joinHoverGroup();
+  }
+
+  @override
   void didUpdateWidget(Anchor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.transitionDuration != widget.transitionDuration) {
@@ -201,10 +232,12 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
 
     _showTimer?.cancel();
     _hideTimer?.cancel();
+    _hoverArmed = false;
   }
 
   @override
   void dispose() {
+    _leaveHoverGroup();
     _animationController.dispose();
     _isChildHovered.removeListener(_handleHoverChange);
     _isOverlayHovered.removeListener(_handleHoverChange);
@@ -227,9 +260,73 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
     _controller.hide();
   }
 
-  void _tryShow() {
-    if (_controller.isShowing || (_showTimer?.isActive ?? false)) return;
-    _showTimer = Timer(_effectiveWaitDuration, _showOverlay);
+  void _joinHoverGroup() {
+    if (_isShownInHoverGroup || _effectiveTriggerMode is! HoverTriggerMode) {
+      return;
+    }
+    _isShownInHoverGroup = true;
+    _hoverGroup?.didShow();
+  }
+
+  void _leaveHoverGroup() {
+    if (!_isShownInHoverGroup) return;
+    _isShownInHoverGroup = false;
+    _hoverGroup?.didHide();
+  }
+
+  void _handleShow() {
+    _joinHoverGroup();
+    widget.onShow?.call();
+  }
+
+  void _handleHide() {
+    _leaveHoverGroup();
+    widget.onHide?.call();
+  }
+
+  void _scheduleShow(Offset position) {
+    _hoverArmed = true;
+    _restOrigin = position;
+    _showTimer?.cancel();
+    if (_controller.isShowing) return;
+    final wait = switch (_hoverGroup?.isWarm) {
+      true => Duration.zero,
+      _ => _effectiveWaitDuration,
+    };
+    _showTimer = Timer(wait, _showOverlay);
+  }
+
+  void _handleChildEnter(PointerEnterEvent event) {
+    _isChildHovered.value = true;
+    _hideTimer?.cancel();
+    _hoverArmed = false;
+    if (!_effectiveRequirePointerMovement) _scheduleShow(event.position);
+  }
+
+  void _handleChildHover(PointerHoverEvent event) {
+    if (!_hoverArmed) {
+      _scheduleShow(event.position);
+      return;
+    }
+
+    final tolerance = _effectiveRestTolerance;
+    final restOrigin = _restOrigin;
+    if (tolerance == null || restOrigin == null) return;
+    if (!(_showTimer?.isActive ?? false)) return;
+    if ((event.position - restOrigin).distance > tolerance) {
+      _scheduleShow(event.position);
+    }
+  }
+
+  void _handleChildExit(PointerExitEvent event) {
+    _showTimer?.cancel();
+    _hoverArmed = false;
+    _isChildHovered.value = false;
+  }
+
+  void _handleChildScroll() {
+    _showTimer?.cancel();
+    _hoverArmed = false;
   }
 
   void _handleHoverChange() {
@@ -370,8 +467,8 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
       onShowRequested: _handleShowRequested,
       onHideRequested: _handleHideRequested,
       backdropBuilder: widget.backdropBuilder,
-      onShow: widget.onShow,
-      onHide: widget.onHide,
+      onShow: _handleShow,
+      onHide: _handleHide,
       overlayBuilder: (context) {
         return (widget.transitionBuilder ?? _defaultTransitionBuilder)(
           context,
@@ -413,20 +510,23 @@ class _AnchorState extends State<Anchor> with SingleTickerProviderStateMixin {
           onSecondaryTap: enableSecondaryTap ? _handleSecondaryTap : null,
           onLongPress: enableLongPress ? _handleLongPress : null,
           child: MouseRegion(
-            onEnter: enableHover
-                ? (_) {
-                    _isChildHovered.value = true;
-                    _hideTimer?.cancel();
-                    _tryShow();
-                  }
+            onEnter: enableHover ? _handleChildEnter : null,
+            onHover: enableHover &&
+                    (_effectiveRequirePointerMovement ||
+                        _effectiveRestTolerance != null)
+                ? _handleChildHover
                 : null,
-            onExit: enableHover
-                ? (_) {
-                    _showTimer?.cancel();
-                    _isChildHovered.value = false;
-                  }
-                : null,
-            child: child,
+            onExit: enableHover ? _handleChildExit : null,
+            child: enableHover && _effectiveRequirePointerMovement
+                ? Listener(
+                    behavior: HitTestBehavior.translucent,
+                    onPointerSignal: (event) {
+                      if (event is PointerScrollEvent) _handleChildScroll();
+                    },
+                    onPointerPanZoomStart: (_) => _handleChildScroll(),
+                    child: child,
+                  )
+                : child,
           ),
         ),
       ),
