@@ -180,6 +180,10 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
 
   Size? _measuredOverlaySize;
 
+  // Positions are worked out in global units, but the follower draws in the
+  // child's space, which a scaled ancestor such as a FittedBox shrinks.
+  var _childScale = 1.0;
+
   late PositioningPipeline _pipeline;
 
   var _points = const AnchorPoints(
@@ -341,13 +345,16 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
   (AnchorPoints, AnchorGeometry, PositionMetadata)? _calculateAnchorPoints({
     bool notify = true,
   }) {
-    final childSize = _layerLink.leaderSize;
-    if (childSize == null) return null;
+    if (_layerLink.leaderSize == null) return null;
 
     final renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) return null;
 
     final childGlobalPosition = renderBox.localToGlobal(Offset.zero);
+    _childScale =
+        (renderBox.localToGlobal(const Offset(1, 0)) - childGlobalPosition)
+            .distance;
+    final childSize = _layerLink.leaderSize! * _childScale;
     final screenSize = MediaQuery.sizeOf(context);
 
     final effectiveOverlayHeight =
@@ -474,22 +481,26 @@ class _RawAnchorState extends State<RawAnchor> with WidgetsBindingObserver {
                 link: _layerLink,
                 targetAnchor: _points.childAnchor,
                 followerAnchor: _points.overlayAnchor,
-                offset: _points.offset,
-                child: Align(
-                  alignment: _points.overlayAlignment,
-                  child: Offstage(
-                    offstage: _isWaitingForMeasurement,
-                    child: _MeasureSize(
-                      onChange: _handleOverlaySizeMeasured,
-                      child: _AnchorConstrainedBox(
-                        recalculate: switch (_metadata.get<SizeData>()) {
-                          null => null,
-                          _ => () => _calculateAnchorPoints(
-                                notify: false,
-                              ),
-                        },
-                        child: Builder(
-                          builder: widget.overlayBuilder,
+                offset: _points.offset / _childScale,
+                child: Transform.scale(
+                  scale: 1 / _childScale,
+                  alignment: _points.overlayAnchor,
+                  child: Align(
+                    alignment: _points.overlayAlignment,
+                    child: Offstage(
+                      offstage: _isWaitingForMeasurement,
+                      child: _MeasureSize(
+                        onChange: _handleOverlaySizeMeasured,
+                        child: _AnchorConstrainedBox(
+                          recalculate: switch (_metadata.get<SizeData>()) {
+                            null => null,
+                            _ => () => _calculateAnchorPoints(
+                                  notify: false,
+                                ),
+                          },
+                          child: Builder(
+                            builder: widget.overlayBuilder,
+                          ),
                         ),
                       ),
                     ),

@@ -419,4 +419,84 @@ void main() {
       expect(buildCount, greaterThan(initialCount));
     });
   });
+
+  group('RawAnchor inside a scaled parent', () {
+    const childOrigin = Offset(100, 100);
+    const childSize = Size(200, 40);
+    const overlaySize = Size(80, 30);
+    const point = Offset(130, 105);
+
+    final cases = [
+      for (final scale in [1.0, 0.5])
+        for (final c in [
+          (
+            label: 'below the child',
+            middlewares: <PositioningMiddleware>[],
+            topLeft: childOrigin + Offset(0, childSize.height * scale),
+          ),
+          (
+            label: 'at a pointer position',
+            middlewares: <PositioningMiddleware>[
+              const VirtualReferenceMiddleware(
+                VirtualReference.fromPoint(point),
+              ),
+            ],
+            topLeft: point,
+          ),
+        ])
+          (
+            scale: scale,
+            label: c.label,
+            middlewares: c.middlewares,
+            topLeft: c.topLeft
+          ),
+    ];
+
+    for (final c in cases) {
+      testWidgets(
+        'keeps the overlay at full size ${c.label} when the child is scaled '
+        'by ${c.scale}',
+        (tester) async {
+          final controller = AnchorController();
+          const overlayKey = Key('overlay');
+
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: childOrigin.dx,
+                    top: childOrigin.dy,
+                  ),
+                  child: Transform.scale(
+                    scale: c.scale,
+                    alignment: Alignment.topLeft,
+                    child: RawAnchor(
+                      controller: controller,
+                      placement: Placement.bottomStart,
+                      middlewares: c.middlewares,
+                      overlayBuilder: (context) => SizedBox.fromSize(
+                        key: overlayKey,
+                        size: overlaySize,
+                      ),
+                      child: SizedBox.fromSize(size: childSize),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+
+          controller.show();
+          await tester.pumpAndSettle();
+
+          expect(
+            tester.getRect(find.byKey(overlayKey)),
+            rectMoreOrLessEquals(c.topLeft & overlaySize),
+          );
+        },
+      );
+    }
+  });
 }
